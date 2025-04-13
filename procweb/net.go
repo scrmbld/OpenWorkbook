@@ -19,9 +19,8 @@ func jsonFromMsg(msg ProcMessage) ([]byte, error) {
 }
 
 func ScanProcConnection(sock net.Conn, incomingMsgChan chan ProcMessage) {
+	d := json.NewDecoder(sock)
 	for {
-		d := json.NewDecoder(sock)
-
 		var msg ProcMessage
 
 		err := d.Decode(&msg)
@@ -33,8 +32,9 @@ func ScanProcConnection(sock net.Conn, incomingMsgChan chan ProcMessage) {
 	}
 }
 
-func SendProcConnection(sock net.Conn, outgoingMsgChan chan ProcMessage) {
-	for msg := range outgoingMsgChan {
+func SendProcConnection(sock net.Conn, outgoingMsgChan chan []byte, category string) {
+	for msg_bytes := range outgoingMsgChan {
+		msg := ProcMessage{Category: category, Body: string(msg_bytes)}
 		encoded, err := jsonFromMsg(msg)
 		if err != nil {
 			panic(err)
