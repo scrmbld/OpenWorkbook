@@ -20,8 +20,8 @@ func NewInstance(program string, sock net.Conn) {
 
 	// these hold messages I/O for the lua process
 	stdinChan := make(chan []byte, 8)
-	stdoutChan := make(chan []byte, 8)
-	stderrChan := make(chan []byte, 8)
+	stdoutChan := make(chan ProcMessage, 8)
+	stderrChan := make(chan ProcMessage, 8)
 
 	// scan our process I/O
 	// wg.Add(3)

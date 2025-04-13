@@ -13,8 +13,8 @@ func RunLua(ctx context.Context,
 	cancel context.CancelFunc,
 	program string,
 	stdinChan chan []byte,
-	stdoutChan chan []byte,
-	stderrChan chan []byte,
+	stdoutChan chan ProcMessage,
+	stderrChan chan ProcMessage,
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
@@ -61,7 +61,7 @@ func RunLua(ctx context.Context,
 				return
 
 			case msg := <-stdinChan:
-				ProcLog.Println(msg)
+				ProcLog.Println(string(msg))
 				_, err := stdin.Write(msg)
 				if err != nil {
 					if errors.Is(err, fs.ErrClosed) {
@@ -75,7 +75,7 @@ func RunLua(ctx context.Context,
 	}()
 
 	// read an output pipe
-	outScanner := func(pipe io.ReadCloser, outChan chan []byte, name string) {
+	outScanner := func(pipe io.ReadCloser, outChan chan ProcMessage, name string) {
 		defer pipe.Close()
 
 		for {
@@ -101,7 +101,7 @@ func RunLua(ctx context.Context,
 			case <-ctx.Done():
 				ProcLog.Println(name, "cancelled")
 				return
-			case outChan <- msg[:n]:
+			case outChan <- ProcMessage{Category: name, Body: string(msg[:n])}:
 				continue
 			}
 		}

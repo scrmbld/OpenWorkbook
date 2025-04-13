@@ -62,7 +62,7 @@ func SendProcConnection(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	sock net.Conn,
-	outgoingMsgChan chan []byte,
+	outgoingMsgChan chan ProcMessage,
 	category string,
 ) {
 	go func() {
@@ -72,8 +72,7 @@ func SendProcConnection(
 			case <-ctx.Done():
 				ProcLog.Print(category, ": cancelled")
 				return
-			case msg_bytes := <-outgoingMsgChan:
-				msg := ProcMessage{Category: category, Body: string(msg_bytes)}
+			case msg := <-outgoingMsgChan:
 				encoded, err := jsonFromMsg(msg)
 				if err != nil {
 					ProcLog.Print(err)
