@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"gihub.com/scrmbld/course-site/procrun"
+	"github.com/scrmbld/course-site/procweb"
 )
 
 // start the lua program
@@ -30,7 +30,7 @@ func main() {
 	stdoutChan := make(chan []byte, 8)
 	stderrChan := make(chan []byte, 8)
 	wg.Add(1)
-	go procrun.RunLua("lua/test.lua", stdinChan, stdoutChan, stderrChan, &wg)
+	go procweb.RunLua("lua/test.lua", stdinChan, stdoutChan, stderrChan, &wg)
 	stdinScanner := bufio.NewScanner(os.Stdin)
 	stdoutWriter := bufio.NewWriter(os.Stdout)
 	stderrWriter := bufio.NewWriter(os.Stderr)

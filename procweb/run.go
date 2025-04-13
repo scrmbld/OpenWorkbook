@@ -1,4 +1,4 @@
-package procrun
+package procweb
 
 import (
 	"errors"

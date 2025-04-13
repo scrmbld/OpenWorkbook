@@ -1,4 +1,4 @@
-package procnet
+package procweb
 
 import (
 	"encoding/json"
