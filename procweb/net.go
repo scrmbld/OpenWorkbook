@@ -1,6 +1,7 @@
 package procweb
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 )
@@ -18,30 +19,74 @@ func jsonFromMsg(msg ProcMessage) ([]byte, error) {
 	return result, nil
 }
 
-func ScanProcConnection(sock net.Conn, incomingMsgChan chan ProcMessage) {
-	d := json.NewDecoder(sock)
-	for {
-		var msg ProcMessage
+// starts a new goroutine that reads from the socket and sends them to the returned channel.
+func ScanProcConnection(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	sock net.Conn,
+) <-chan ProcMessage {
+	// create output channel
+	dest := make(chan ProcMessage)
+	// start a new thread to decode
+	go func() {
+		defer sock.Close()
+		d := json.NewDecoder(sock)
 
-		err := d.Decode(&msg)
-		if err != nil {
-			panic(err)
+		for {
+			var msg ProcMessage
+			err := d.Decode(&msg)
+
+			// if there is an error, tell everyone to stop
+			if err != nil {
+				ProcLog.Print(err)
+				cancel()
+				return
+			}
+
+			select {
+			// check if anyone else has called cancel()
+			case <-ctx.Done():
+				return
+			// do our normal stuff
+			case dest <- msg:
+				ProcLog.Println(msg)
+			}
 		}
+	}()
 
-		incomingMsgChan <- msg
-	}
+	return dest
 }
 
-func SendProcConnection(sock net.Conn, outgoingMsgChan chan []byte, category string) {
-	for msg_bytes := range outgoingMsgChan {
-		msg := ProcMessage{Category: category, Body: string(msg_bytes)}
-		encoded, err := jsonFromMsg(msg)
-		if err != nil {
-			panic(err)
+// Starts a new goroutine that consumes outgoingMsgChan and sends ProcMessages through sock.
+func SendProcConnection(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	sock net.Conn,
+	outgoingMsgChan chan []byte,
+	category string,
+) {
+	go func() {
+		defer sock.Close()
+		for {
+			select {
+			case <-ctx.Done():
+				ProcLog.Print(category, ": cancelled")
+				return
+			case msg_bytes := <-outgoingMsgChan:
+				msg := ProcMessage{Category: category, Body: string(msg_bytes)}
+				encoded, err := jsonFromMsg(msg)
+				if err != nil {
+					ProcLog.Print(err)
+					cancel()
+					return
+				}
+				_, err = sock.Write(encoded)
+				if err != nil {
+					ProcLog.Print(err)
+					cancel()
+					return
+				}
+			}
 		}
-		_, err = sock.Write(encoded)
-		if err != nil {
-			panic(err)
-		}
-	}
+	}()
 }

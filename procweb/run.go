@@ -1,16 +1,22 @@
 package procweb
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os/exec"
 	"sync"
 )
 
-func RunLua(program string, stdinChan chan []byte, stdoutChan chan []byte, stderrChan chan []byte, wg *sync.WaitGroup) {
+func RunLua(ctx context.Context,
+	cancel context.CancelFunc,
+	program string,
+	stdinChan chan []byte,
+	stdoutChan chan []byte,
+	stderrChan chan []byte,
+	wg *sync.WaitGroup,
+) {
 	defer wg.Done()
 
 	// prepare the process
@@ -18,40 +24,52 @@ func RunLua(program string, stdinChan chan []byte, stdoutChan chan []byte, stder
 
 	stdin, err := proc.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
+		ProcLog.Print(err)
+		cancel()
+		return
 	}
 	stdout, err := proc.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		ProcLog.Print(err)
+		cancel()
+		return
 	}
 	stderr, err := proc.StderrPipe()
 	if err != nil {
-		log.Fatal(err)
+		ProcLog.Print(err)
+		cancel()
+		return
 	}
 
 	err = proc.Start()
 	if err != nil {
-		log.Fatal(err)
+		ProcLog.Print(err)
+		cancel()
+		return
 	}
 
 	// write to stdin
 	go func() {
-		for {
-			defer stdin.Close()
-			defer fmt.Println("closing stdin pipe")
-			var msg []byte
-			msg, ok := <-stdinChan
-			if ok == false {
-				break
-			}
+		defer stdin.Close()
+		defer ProcLog.Println("closing stdin pipe")
 
-			_, err := stdin.Write(msg)
-			if err != nil {
-				if errors.Is(err, fs.ErrClosed) {
-					fmt.Println("stdin: closed")
-					break
+		for {
+			select {
+			case <-ctx.Done():
+				ProcLog.Println("write to stdin cancelled")
+				cancel()
+				return
+
+			case msg := <-stdinChan:
+				ProcLog.Println(msg)
+				_, err := stdin.Write(msg)
+				if err != nil {
+					if errors.Is(err, fs.ErrClosed) {
+						ProcLog.Println("stdin: closed")
+						break
+					}
+					ProcLog.Fatal("stdin: ", err)
 				}
-				log.Fatal("stdin: ", err)
 			}
 		}
 	}()
@@ -59,24 +77,33 @@ func RunLua(program string, stdinChan chan []byte, stdoutChan chan []byte, stder
 	// read an output pipe
 	outScanner := func(pipe io.ReadCloser, outChan chan []byte, name string) {
 		defer pipe.Close()
-		defer close(outChan)
 
 		for {
 			msg := make([]byte, 2048)
 			n, err := pipe.Read(msg)
 			if err != nil {
+				// these two branches are non-error end states, so don't cancel
 				if errors.Is(err, fs.ErrClosed) {
-					fmt.Println(name, ": closed")
+					ProcLog.Println(name, "pipe closed")
 					return
 				}
 				if errors.Is(err, io.EOF) {
-					fmt.Println(name, ": EOF")
+					ProcLog.Println(name, "pipe EOF")
 					return
 				}
-				log.Fatal(name, ": ", err)
+				// something bad happened, shut it all down
+				ProcLog.Println(name, err)
+				cancel()
+				return
 			}
 
-			outChan <- msg[:n]
+			select {
+			case <-ctx.Done():
+				ProcLog.Println(name, "cancelled")
+				return
+			case outChan <- msg[:n]:
+				continue
+			}
 		}
 	}
 
@@ -87,7 +114,7 @@ func RunLua(program string, stdinChan chan []byte, stdoutChan chan []byte, stder
 
 	err = proc.Wait()
 	if err != nil {
-		fmt.Println(err)
+		ProcLog.Println(err)
 	}
-	fmt.Println("proc done")
+	ProcLog.Println("proc done")
 }
