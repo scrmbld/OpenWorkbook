@@ -20,7 +20,7 @@ func RunLua(ctx context.Context,
 	defer wg.Done()
 
 	// prepare the process
-	proc := exec.Command("lua", program)
+	proc := exec.CommandContext(ctx, "lua", program)
 
 	stdin, err := proc.StdinPipe()
 	if err != nil {
