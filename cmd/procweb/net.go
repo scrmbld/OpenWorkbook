@@ -30,6 +30,7 @@ func ScanProcConnection(
 	// start a new thread to decode
 	go func() {
 		defer sock.Close()
+		defer close(dest)
 		d := json.NewDecoder(sock)
 
 		for {
