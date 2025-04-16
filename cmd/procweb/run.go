@@ -70,6 +70,7 @@ func outScanner(ctx context.Context,
 	name string,
 ) {
 	defer pipe.Close()
+	defer close(outChan)
 
 	for {
 		msg := make([]byte, 2048)
@@ -108,7 +109,7 @@ func inScanner(ctx context.Context,
 ) {
 	defer pipe.Close()
 	defer ProcLog.Println("closing stdin pipe")
-
+ScannerLoop:
 	for {
 		select {
 		case <-ctx.Done():
@@ -116,13 +117,17 @@ func inScanner(ctx context.Context,
 			cancel()
 			return
 
-		case msg := <-inChan:
+		case msg, ok := <-inChan:
+			if ok == false {
+				ProcLog.Println("inChan closed")
+				return
+			}
 			ProcLog.Println(string(msg))
 			_, err := pipe.Write(msg)
 			if err != nil {
 				if errors.Is(err, fs.ErrClosed) {
 					ProcLog.Println("stdin: closed")
-					break
+					break ScannerLoop
 				}
 				ProcLog.Fatal("stdin: ", err)
 			}
