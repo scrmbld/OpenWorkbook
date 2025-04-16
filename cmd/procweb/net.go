@@ -59,6 +59,7 @@ func ScanProcConnection(
 }
 
 // Starts a new goroutine that consumes outgoingMsgChan and sends ProcMessages through sock.
+// category is only used for logging, since the outgoing messages already have their own category field
 func SendProcConnection(
 	ctx context.Context,
 	cancel context.CancelFunc,
@@ -73,7 +74,11 @@ func SendProcConnection(
 			case <-ctx.Done():
 				ProcLog.Print(category, ": cancelled")
 				return
-			case msg := <-outgoingMsgChan:
+			case msg, ok := <-outgoingMsgChan:
+				if ok == false {
+					ProcLog.Println("ougoingMsgChan closed")
+					return
+				}
 				encoded, err := jsonFromMsg(msg)
 				if err != nil {
 					ProcLog.Print(err)
