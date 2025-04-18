@@ -39,7 +39,7 @@ func ScanProcConnection(
 
 			// if there is an error, tell everyone to stop
 			if err != nil {
-				ProcLog.Print(err)
+				ProcLog.Println(err)
 				cancel()
 				return
 			}
@@ -47,9 +47,10 @@ func ScanProcConnection(
 			select {
 			// check if anyone else has called cancel()
 			case <-ctx.Done():
+				ProcLog.Println("stdin cancelling")
 				return
-			// do our normal stuff
 			case dest <- msg:
+				// do our normal stuff
 				ProcLog.Println(msg)
 			}
 		}
