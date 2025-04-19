@@ -407,6 +407,62 @@ func testHelloLua(in []ProcMessage) bool {
 	return true
 }
 
+func testEchoLua(in []ProcMessage) bool {
+	var wg sync.WaitGroup
+
+	// start the instance
+	ourSock, instanceSock := createSockets()
+	NewInstance("test_lua/hello.lua", instanceSock)
+
+	// write to in sock
+	var writeErr chan error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for _, v := range in {
+			stdinJson, err := jsonFromMsg(v)
+			if err != nil {
+				writeErr <- err
+				return
+			}
+			_, err = ourSock.Write(stdinJson)
+			if err != nil {
+				writeErr <- err
+				return
+			}
+		}
+	}()
+
+	// read the output
+	var outMsgs []ProcMessage
+	d := json.NewDecoder(ourSock)
+	for {
+		var currentMsg ProcMessage
+		err := d.Decode(&currentMsg)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return false
+		}
+
+		outMsgs = append(outMsgs, currentMsg)
+	}
+
+	wg.Wait()
+	combined_stdout := combineCategory(outMsgs, "stdout")
+	combined_stderr := combineCategory(outMsgs, "stderr")
+	combined_stdin := combineCategory(in, "stdin")
+	if combined_stdout.Body != combined_stdin.Body {
+		return false
+	}
+	if combined_stderr.Body != "" {
+		return false
+	}
+
+	return true
+}
+
 func TestNewInstance(t *testing.T) {
 	c := quick.Config{
 		MaxCount: 100,
