@@ -11,22 +11,16 @@ import (
 	"time"
 
 	"gihub.com/scrmbld/course-site/cmd/logging"
-	"gihub.com/scrmbld/course-site/views"
-	"github.com/a-h/templ"
 )
 
 const PORT string = "4400"
 const ADDR string = "0.0.0.0"
 
-func addRoutes(mux *http.ServeMux, logger *log.Logger) {
-	mux.Handle("/", templ.Handler(views.Index()))
-}
-
 func NewServer(
 	logger *log.Logger,
 ) http.Handler {
 	mux := http.NewServeMux()
-	addRoutes(mux, logger)
+	AddRoutes(mux, logger)
 
 	var handler http.Handler = mux
 	// middleware goes here

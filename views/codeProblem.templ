@@ -1,0 +1,23 @@
+package views
+
+css codearea() {
+	resize: none;
+	display: block;
+}
+
+css submitButton() {
+	display: block;
+}
+
+templ codeProblem(starterCode string) {
+	<form class="code-form" action="/startcode" method="POST">
+		<textarea
+			class={ codearea() }
+			name="code-area"
+			id="code-area"
+			rows="8"
+			cols="80"
+		>{ starterCode }</textarea>
+		<button id="run-button" class={ submitButton() } type="submit">Run</button>
+	</form>
+}

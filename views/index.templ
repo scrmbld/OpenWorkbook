@@ -1,7 +1,12 @@
 package views
 
-templ Index() {
+templ Index(starterCode string) {
 	@base("index") {
 		<h1>Hello World!</h1>
+		if starterCode == "" {
+			@codeProblem("print('hello, world!')")
+		} else {
+			@codeProblem(starterCode)
+		}
 	}
 }
