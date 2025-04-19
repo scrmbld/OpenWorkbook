@@ -8,7 +8,10 @@ import (
 	"github.com/a-h/templ"
 )
 
-func AddRoutes(mux *http.ServeMux, logger *log.Logger) {
+func AddRoutes(
+	mux *http.ServeMux,
+	logger *log.Logger,
+) {
 	mux.Handle("/index", templ.Handler(views.Index("")))
 	mux.Handle("/startcode", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.PostFormValue("code-area")
@@ -16,4 +19,8 @@ func AddRoutes(mux *http.ServeMux, logger *log.Logger) {
 
 		http.Redirect(w, r, "/index", http.StatusSeeOther)
 	}))
+
+	// static files (at this stage, just images and CSS)
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("/", fs)
 }
