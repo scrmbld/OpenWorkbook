@@ -2,11 +2,25 @@ package views
 
 templ Index(starterCode string) {
 	@base("index") {
-		<h1>Hello World!</h1>
-		if starterCode == "" {
-			@codeProblem("print('hello, world!')")
-		} else {
-			@codeProblem(starterCode)
-		}
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h1>Hello World!</h1>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					if starterCode == "" {
+						@codeProblem("print('hello, world!')")
+					} else {
+						@codeProblem(starterCode)
+					}
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-4">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Corrupti nemo, illo necessitatibus magnam suscipit, doloribus recusandae facilis earum incidunt cupiditate molestiae iusto blanditiis consequatur perspiciatis sit deleniti minus, et reiciendis!</div>
+				<div class="col-md-8">Lorem ipsum dolor sit amet consectetur adipisicing elit. Cum eligendi neque dicta totam sit ab nostrum doloribus corporis repudiandae voluptates accusantium sapiente, adipisci blanditiis ullam laudantium, dolorem alias sint officiis.</div>
+			</div>
+		</div>
 	}
 }
