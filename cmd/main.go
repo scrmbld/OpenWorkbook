@@ -24,7 +24,7 @@ func NewServer(
 
 	var handler http.Handler = mux
 	// middleware goes here
-	handler = logging.NewLoggingMiddleware(handler, logger)
+	handler = logging.LogWare(handler, logger)
 	return handler
 }
 

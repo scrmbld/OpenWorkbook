@@ -6,7 +6,37 @@ import (
 
 	"gihub.com/scrmbld/course-site/views"
 	"github.com/a-h/templ"
+	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+}
+
+func handleRun(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("upgrade: ", err)
+		return
+	}
+
+	defer c.Close()
+
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
+		log.Printf("recv: %s", message)
+		err = c.WriteMessage(mt, message)
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
+	}
+}
 
 func AddRoutes(
 	mux *http.ServeMux,
@@ -23,4 +53,5 @@ func AddRoutes(
 	// static files (at this stage, just images and CSS)
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/", fs)
+	mux.HandleFunc("/echo", handleRun)
 }

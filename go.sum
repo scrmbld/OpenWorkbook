@@ -2,3 +2,5 @@ github.com/a-h/templ v0.3.857 h1:6EqcJuGZW4OL+2iZ3MD+NnIcG7nGkaQeF2Zq5kf9ZGg=
 github.com/a-h/templ v0.3.857/go.mod h1:qhrhAkRFubE7khxLZHsBFHfX+gWwVNKbzKeF9GlPV4M=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
