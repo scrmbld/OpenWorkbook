@@ -56,7 +56,7 @@ func Index(starterCode string) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div></div><div class=\"row\"><div class=\"col-md-4\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Corrupti nemo, illo necessitatibus magnam suscipit, doloribus recusandae facilis earum incidunt cupiditate molestiae iusto blanditiis consequatur perspiciatis sit deleniti minus, et reiciendis!</div><div class=\"col-md-8\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Cum eligendi neque dicta totam sit ab nostrum doloribus corporis repudiandae voluptates accusantium sapiente, adipisci blanditiis ullam laudantium, dolorem alias sint officiis.</div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div></div><div class=\"row\"><div class=\"col-md-12 terminal-container\"><div id=\"terminal\"></div></div></div><div class=\"row\"><div class=\"col-md-4\">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Corrupti nemo, illo necessitatibus magnam suscipit, doloribus recusandae facilis earum incidunt cupiditate molestiae iusto blanditiis consequatur perspiciatis sit deleniti minus, et reiciendis!</div><div class=\"col-md-8\">Lorem ipsum dolor sit amet consectetur adipisicing elit. Cum eligendi neque dicta totam sit ab nostrum doloribus corporis repudiandae voluptates accusantium sapiente, adipisci blanditiis ullam laudantium, dolorem alias sint officiis.</div></div><script src=\"/termBody.bundle.js\"></script></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
