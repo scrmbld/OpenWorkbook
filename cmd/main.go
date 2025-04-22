@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"gihub.com/scrmbld/course-site/cmd/logging"
+	"gihub.com/scrmbld/OpenWorkbook/cmd/logging"
 )
 
 const PORT string = "4400"

@@ -1,4 +1,4 @@
-module gihub.com/scrmbld/course-site
+module gihub.com/scrmbld/OpenWorkbook
 
 go 1.24.2
 
