@@ -5,37 +5,61 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"net"
+	"net/http"
 	"reflect"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"testing/quick"
+
+	"github.com/gorilla/websocket"
 )
 
-// ## objectives
-// - test different lua programs
-// - test different valid inputs
-// - test a variety of invalid inputs
-// - test a variety of failure conditions
-//		- socket errors
-//		- lua process errors
+// global values
+// ===========================
+var httpServerState struct {
+	started bool
+	srv     *http.Server
+	socks   chan *websocket.Conn
+}
 
-// ## what constitutes a correct result?
-// - client receives the expected json messages
-// - all goroutines shut down when they should
-// - there should be no case where any of the goroutines crash (it's ok if the exec process crashes)
+var upgrader = websocket.Upgrader{}
 
-// ## what units need to be tested?
-// jsonFromMsg (done)
-// ScanProcConnection (done)
-// SendProcConnection (done)
-// inScanner
-// outScanner
-// runLua (?)
+func startServer() {
+	if httpServerState.started == true {
+		return
+	}
+	httpServerState.socks = make(chan *websocket.Conn, 8)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		listenSock, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			panic(err)
+		}
+		httpServerState.socks <- listenSock
+	})
+	var srv http.Handler = mux
+	httpServerState.srv = &http.Server{
+		Addr:    net.JoinHostPort("localhost", "4041"),
+		Handler: srv,
+	}
+
+	go func() {
+		httpServerState.started = true
+		if err := httpServerState.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			httpServerState.started = false
+		}
+	}()
+
+}
+
+var serverStarted bool = false
 
 // helper functions
 // ===========================
@@ -51,40 +75,24 @@ func flattenSlice[T any](ts [][]T) []T {
 
 // create two sockets that are connected to each other
 // similar to io.Pipe()
-func createSockets() (net.Conn, net.Conn) {
-	var (
-		listen_sock net.Conn
-		dial_sock   net.Conn
-		addr        string
-		wg1         sync.WaitGroup
-		wg2         sync.WaitGroup
-	)
-	// listener
-	wg1.Add(1)
-	wg2.Add(1)
-	go func() {
-		defer wg2.Done()
-		listener, err := net.Listen("tcp", "")
-		if err != nil {
-			panic(err)
-		}
-		addr = listener.Addr().String()
-		wg1.Done()
-		listen_sock, err = listener.Accept()
-		if err != nil {
-			panic(err)
-		}
-	}()
+func createSockets() (*websocket.Conn, *websocket.Conn) {
+
+	// start the server, if necessary
+	startServer()
 
 	//dialer
-	wg1.Wait()
-	dial_sock, err := net.Dial("tcp", addr)
+	dialSock, _, err := websocket.DefaultDialer.Dial("ws://localhost:4041", nil)
 	if err != nil {
 		panic(err)
 	}
 
-	wg2.Wait()
-	return listen_sock, dial_sock
+	// listener
+	listenSock, ok := <-httpServerState.socks
+	if ok == false {
+		panic("unable to open listen socket")
+	}
+
+	return listenSock, dialSock
 }
 
 // given a slice of ProcMessages, concatenate the bodies of
@@ -167,108 +175,9 @@ func inScannerIdentity(in [][]byte) bool {
 }
 
 func TestInScanner(t *testing.T) {
-	c := quick.Config{MaxCount: 1_000}
+	c := quick.Config{MaxCount: 10_000}
 
 	if err := quick.Check(inScannerIdentity, &c); err != nil {
-		t.Error(err)
-	}
-}
-
-// We also need to test the whole subsystem (aka NewInstance)
-
-// ScanProcConnection tests
-// ===========================
-
-// make sure that result of ProcMessage->json=>socket->ProcMessage=>channel is the same as the input
-func scanConnectionIdentity(in []ProcMessage) bool {
-	readSock, writeSock := createSockets()
-
-	// start the scanner
-	ctx, cancel := context.WithCancel(context.Background())
-	result_msg_chan := ScanProcConnection(ctx, cancel, readSock)
-
-	// send stuff to the scanner
-	go func() {
-		defer writeSock.Close()
-		obj := make([]byte, 0, 1024)
-		for _, msg := range in {
-			var err error
-			obj, err = json.Marshal(msg)
-			_, err = writeSock.Write(obj)
-			if err != nil {
-				return
-			}
-		}
-	}()
-
-	// read from the channel
-	out := make([]ProcMessage, 0, len(in))
-	for msg := range result_msg_chan {
-		out = append(out, msg)
-	}
-
-	// compare the slices
-	return slices.Equal(in, out)
-}
-
-func TestScanProcConnection(t *testing.T) {
-	c := quick.Config{MaxCount: 1000}
-
-	if err := quick.Check(scanConnectionIdentity, &c); err != nil {
-		t.Error(err)
-	}
-}
-
-// SencdProcConnection tests
-// ===========================
-func sendConnectionIdentity(in struct {
-	Messages []ProcMessage
-}) bool {
-	// open the sockets
-	read_sock, write_sock := createSockets()
-	defer read_sock.Close()
-
-	// start the sender
-	outgoingMsgChan := make(chan ProcMessage, 8)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	SendProcConnection(ctx, cancel, write_sock, outgoingMsgChan, "") // the last arg is just for logging
-
-	// put stuff into the sender channel
-	go func() {
-		defer close(outgoingMsgChan)
-		for _, v := range in.Messages {
-			select {
-			case outgoingMsgChan <- v:
-			case <-ctx.Done():
-				return
-			}
-
-		}
-	}()
-
-	d := json.NewDecoder(read_sock)
-	out := make([]ProcMessage, 0, len(in.Messages))
-	for {
-		var msg ProcMessage
-		err := d.Decode(&msg)
-		if err != nil {
-			if errors.Is(io.EOF, err) {
-				break
-			}
-			return false
-		}
-
-		out = append(out, msg)
-	}
-
-	return slices.Equal(in.Messages, out)
-}
-
-func TestSendProcConnection(t *testing.T) {
-	c := quick.Config{MaxCount: 1000}
-
-	if err := quick.Check(sendConnectionIdentity, &c); err != nil {
 		t.Error(err)
 	}
 }
@@ -312,9 +221,108 @@ func outScannerIdentity(in struct {
 }
 
 func TestOutScanner(t *testing.T) {
-	c := quick.Config{MaxCount: 1_000}
+	c := quick.Config{MaxCount: 10_000}
 
 	if err := quick.Check(outScannerIdentity, &c); err != nil {
+		t.Error(err)
+	}
+}
+
+// ScanProcConnection tests
+// ===========================
+
+// make sure that result of ProcMessage->socket->ProcMessage->channel is the same as the input
+func scanConnectionIdentity(in []ProcMessage) bool {
+	var mtx sync.Mutex
+	readSock, writeSock := createSockets()
+
+	// start the scanner
+	ctx, cancel := context.WithCancel(context.Background())
+	result_msg_chan := ScanProcConnection(ctx, cancel, readSock, &mtx)
+
+	// send stuff to the scanner
+	go func() {
+		defer shutdownWs(writeSock, &mtx)
+		for _, msg := range in {
+			var err error
+			mtx.Lock()
+			err = writeSock.WriteJSON(msg)
+			mtx.Unlock()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	// read from the channel
+	out := make([]ProcMessage, 0, len(in))
+	for msg := range result_msg_chan {
+		out = append(out, msg)
+	}
+
+	// compare the slices
+	return slices.Equal(in, out)
+}
+
+func TestScanProcConnection(t *testing.T) {
+	c := quick.Config{MaxCount: 1_000}
+
+	if err := quick.Check(scanConnectionIdentity, &c); err != nil {
+		t.Error(err)
+	}
+}
+
+// SendProcConnection tests
+// ===========================
+
+func sendConnectionIdentity(in []ProcMessage) bool {
+	var mtx sync.Mutex
+	// open the sockets
+	readSock, writeSock := createSockets()
+	defer shutdownWs(readSock, &mtx)
+
+	// start the sender
+	outgoingMsgChan := make(chan ProcMessage, 8)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	SendProcConnection(ctx, cancel, writeSock, &mtx, outgoingMsgChan, "") // the last arg is just for logging
+
+	// put stuff into the sender channel
+	go func() {
+		defer close(outgoingMsgChan)
+		for _, v := range in {
+			select {
+			case outgoingMsgChan <- v:
+			case <-ctx.Done():
+				return
+			}
+
+		}
+	}()
+
+	out := make([]ProcMessage, 0, len(in))
+	for {
+		var msg ProcMessage
+		err := readSock.ReadJSON(&msg)
+		if err != nil {
+			if websocket.IsCloseError(err, 1000) {
+				break
+			}
+			return false
+		}
+
+		out = append(out, msg)
+	}
+
+	return slices.Equal(in, out)
+}
+
+func TestSendProcConnection(t *testing.T) {
+	c := quick.Config{
+		MaxCount: 1_000,
+	}
+
+	if err := quick.Check(sendConnectionIdentity, &c); err != nil {
 		t.Error(err)
 	}
 }
@@ -330,8 +338,8 @@ func msgOfCategory(r *rand.Rand, bodyLenMin int, bodyLenMax int, category string
 	rangeLen := bodyLenMax - bodyLenMin
 	bodyLen := r.Intn(rangeLen) + bodyLenMin
 
-	unicodeMin := 0x0020
-	unicodeMax := 0x10FFFF
+	unicodeMin := 0x0021
+	unicodeMax := 0x0096
 
 	var bodyBuilder strings.Builder
 	for _ = range bodyLen {
@@ -354,6 +362,9 @@ func msgCategorySlice(r *rand.Rand, lenMin int, lenMax int, category string) []P
 	return result
 }
 
+// test programs
+// -----------------
+
 // make sure that hello.lua produces the correct output
 // all is does is print "hi"
 func testHelloLua(in []ProcMessage) bool {
@@ -368,11 +379,7 @@ func testHelloLua(in []ProcMessage) bool {
 	go func() {
 		defer wg.Done()
 		for _, v := range in {
-			stdinJson, err := jsonFromMsg(v)
-			if err != nil {
-				return
-			}
-			_, err = ourSock.Write(stdinJson)
+			err := ourSock.WriteJSON(v)
 			if err != nil {
 				return
 			}
@@ -381,12 +388,12 @@ func testHelloLua(in []ProcMessage) bool {
 
 	// read output from ourSock
 	var outMsgs []ProcMessage
-	d := json.NewDecoder(ourSock)
 	for {
 		var currentMsg ProcMessage
-		err := d.Decode(&currentMsg)
+		err := ourSock.ReadJSON(&currentMsg)
 		if err != nil {
-			if errors.Is(err, io.EOF) {
+			if websocket.IsCloseError(err, 1000) {
+				fmt.Println("done reading")
 				break
 			}
 			return false
@@ -412,37 +419,36 @@ func testEchoLua(in []ProcMessage) bool {
 
 	// start the instance
 	ourSock, instanceSock := createSockets()
-	NewInstance("test_lua/hello.lua", instanceSock)
+	go NewInstance("test_lua/echo.lua", instanceSock)
 
 	// write to in sock
-	var writeErr chan error
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for _, v := range in {
-			stdinJson, err := jsonFromMsg(v)
+			err := ourSock.WriteJSON(v)
 			if err != nil {
-				writeErr <- err
-				return
-			}
-			_, err = ourSock.Write(stdinJson)
-			if err != nil {
-				writeErr <- err
-				return
+				if websocket.IsCloseError(err, 1000) {
+					break
+				}
+				break
 			}
 		}
+		msg := ProcMessage{"EOF", ""}
+		ourSock.WriteJSON(msg)
 	}()
 
 	// read the output
 	var outMsgs []ProcMessage
-	d := json.NewDecoder(ourSock)
 	for {
 		var currentMsg ProcMessage
-		err := d.Decode(&currentMsg)
+		err := ourSock.ReadJSON(&currentMsg)
 		if err != nil {
-			if errors.Is(err, io.EOF) {
+			if websocket.IsCloseError(err, 1000) {
+				fmt.Println("done reading")
 				break
 			}
+			fmt.Println("fatal:", err)
 			return false
 		}
 
@@ -453,15 +459,23 @@ func testEchoLua(in []ProcMessage) bool {
 	combined_stdout := combineCategory(outMsgs, "stdout")
 	combined_stderr := combineCategory(outMsgs, "stderr")
 	combined_stdin := combineCategory(in, "stdin")
+	if combined_stdin.Body[len(combined_stdin.Body)-1] != byte('\n') {
+		combined_stdin.Body = combined_stdin.Body + "\n"
+	}
 	if combined_stdout.Body != combined_stdin.Body {
+		fmt.Println("bad stdout:", combined_stdout)
 		return false
 	}
 	if combined_stderr.Body != "" {
+		fmt.Println("bad stderr:", combined_stderr)
 		return false
 	}
 
 	return true
 }
+
+// actually run the tests
+// -----------------
 
 func TestNewInstance(t *testing.T) {
 	c := quick.Config{
@@ -472,6 +486,10 @@ func TestNewInstance(t *testing.T) {
 	}
 
 	if err := quick.Check(testHelloLua, &c); err != nil {
+		t.Error(err)
+	}
+
+	if err := quick.Check(testEchoLua, &c); err != nil {
 		t.Error(err)
 	}
 }

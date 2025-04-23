@@ -3,18 +3,18 @@ package procweb
 import (
 	"context"
 	"log"
-	"net"
 	"os"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 var ProcLog *log.Logger = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmsgprefix|log.Llongfile)
 
 // run a new program with CLI I/O being sent over the network
-func NewInstance(program string, sock net.Conn) {
+func NewInstance(program string, ws *websocket.Conn) {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	defer sock.Close()
+	var mtx sync.Mutex
 
 	var wg sync.WaitGroup
 
@@ -25,9 +25,9 @@ func NewInstance(program string, sock net.Conn) {
 
 	// scan our process I/O
 	// wg.Add(3)
-	incomingMsgChan := ScanProcConnection(ctx, cancel, sock)
-	SendProcConnection(ctx, cancel, sock, stdoutChan, "stdout")
-	SendProcConnection(ctx, cancel, sock, stderrChan, "stderr")
+	incomingMsgChan := ScanProcConnection(ctx, cancel, ws, &mtx)
+	SendProcConnection(ctx, cancel, ws, &mtx, stdoutChan, "stdout")
+	SendProcConnection(ctx, cancel, ws, &mtx, stderrChan, "stderr")
 
 	// consume the incoming messages and pass new messages to the right places
 	// for example, forward the body of stdin messages to stdinChan
@@ -37,11 +37,15 @@ func NewInstance(program string, sock net.Conn) {
 			case <-ctx.Done():
 				return
 			case msg := <-incomingMsgChan:
-				ProcLog.Println(msg)
 				switch msg.Category {
 				case "stdin":
 					stdinChan <- []byte(msg.Body)
 					ProcLog.Println(msg)
+				case "EOF":
+					// end stdin, no more input
+					ProcLog.Println("received EOF")
+					close(stdinChan)
+					return
 				default:
 					ProcLog.Printf("unsupported message category: %s", msg.Category)
 				}

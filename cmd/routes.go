@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"gihub.com/scrmbld/course-site/views"
+	"gihub.com/scrmbld/OpenWorkbook/views"
 	"github.com/a-h/templ"
 	"github.com/gorilla/websocket"
 )

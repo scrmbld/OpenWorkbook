@@ -3,8 +3,29 @@ package procweb
 import (
 	"context"
 	"encoding/json"
-	"net"
+	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
+
+const (
+	writeWait        = 1 * time.Second
+	maxMessageSize   = 8192
+	pongWait         = 60 * time.Second
+	pingPeriod       = (pongWait * 9) / 10
+	closeGracePeriod = 10 * time.Second
+)
+
+func shutdownWs(ws *websocket.Conn, mtx *sync.Mutex) {
+	mtx.Lock()
+	err := ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	mtx.Unlock()
+	if err != nil {
+		ProcLog.Print(err)
+		ws.Close()
+	}
+}
 
 type ProcMessage struct {
 	Category string `json:"category"`
@@ -23,19 +44,22 @@ func jsonFromMsg(msg ProcMessage) ([]byte, error) {
 func ScanProcConnection(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	sock net.Conn,
+	ws *websocket.Conn,
+	mtx *sync.Mutex,
 ) <-chan ProcMessage {
 	// create output channel
 	dest := make(chan ProcMessage)
 	// start a new thread to decode
 	go func() {
-		defer sock.Close()
+		defer shutdownWs(ws, mtx)
 		defer close(dest)
-		d := json.NewDecoder(sock)
 
+		ws.SetReadLimit(maxMessageSize)
+		ws.SetReadDeadline(time.Now().Add(pongWait))
+		ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 		for {
 			var msg ProcMessage
-			err := d.Decode(&msg)
+			err := ws.ReadJSON(&msg)
 
 			// if there is an error, tell everyone to stop
 			if err != nil {
@@ -64,12 +88,14 @@ func ScanProcConnection(
 func SendProcConnection(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	sock net.Conn,
+	ws *websocket.Conn,
+	mtx *sync.Mutex,
 	outgoingMsgChan chan ProcMessage,
 	category string,
 ) {
 	go func() {
-		defer sock.Close()
+		defer shutdownWs(ws, mtx)
+		ws.SetWriteDeadline(time.Now().Add(writeWait))
 		for {
 			select {
 			case <-ctx.Done():
@@ -80,13 +106,11 @@ func SendProcConnection(
 					ProcLog.Println("ougoingMsgChan closed")
 					return
 				}
-				encoded, err := jsonFromMsg(msg)
-				if err != nil {
-					ProcLog.Print(err)
-					cancel()
-					return
-				}
-				_, err = sock.Write(encoded)
+
+				mtx.Lock()
+				err := ws.WriteJSON(msg)
+				mtx.Unlock()
+
 				if err != nil {
 					ProcLog.Print(err)
 					cancel()
