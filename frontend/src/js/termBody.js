@@ -5,9 +5,18 @@ const socketUrl = `${socketProtocol}//${window.location.host}/echo`;
 console.log(socketUrl)
 const socket = new WebSocket(socketUrl);
 
+class ProcMessage {
+	constructor(category, body) {
+		this.category = category;
+		this.body = body;
+	}
+}
+
 socket.onmessage = (e) => {
 	console.log(e.data);
-	term.write(e.data);
+	msg = JSON.parse(e.data);
+	// NOTE: this could get expensive
+	term.write(msg.body.replace(/\n/g, "\n\r"));
 }
 
 // we assume that xtermjs is loaded earlier in the terminal (at least I think that's what window.Terminal means)
@@ -17,7 +26,6 @@ var term = new Terminal({
 });
 let termElement = document.getElementById('terminal');
 term.open(termElement);
-term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $');
 
 function init() {
 	if (term._initialized) {
@@ -27,12 +35,15 @@ function init() {
 	term._initialized = true
 
 	term.onKey((keyObj) => {
-		runCommand(keyObj.key);
+		keyStr = keyObj.key.replace(/\r/g, "\n\r")
+		term.write(keyStr);
+		msg = new ProcMessage("stdin", keyStr)
+		sendProcMsg(msg);
 	});
 
-	// allow pasting from clipboard
-	// <C-S-v> just like most linux terminal emulators
 	term.attachCustomKeyEventHandler((e) => {
+		// allow pasting from clipboard
+		// <C-S-v> just like most linux terminal emulators
 		if ((e.ctrlKey && e.shiftKey) && e.key === 'v') {
 			navigator.clipboard.readText().then((text) => {
 				runCommand(text);
@@ -42,8 +53,8 @@ function init() {
 		return true;
 	})
 
-	function runCommand(command) {
-		socket.send(command);
+	function sendProcMsg(msg) {
+		socket.send(JSON.stringify(msg));
 	}
 }
 
