@@ -1,6 +1,7 @@
 package procweb
 
 import (
+	"bytes"
 	"context"
 	"log"
 	"os"
@@ -12,11 +13,43 @@ import (
 var ProcLog *log.Logger = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lmsgprefix|log.Llongfile)
 
 // run a new program with CLI I/O being sent over the network
-func NewInstance(program string, ws *websocket.Conn) {
+func NewInstance(ws *websocket.Conn) {
 	ctx, cancel := context.WithCancel(context.Background())
 	var mtx sync.Mutex
 
 	var wg sync.WaitGroup
+
+	// read the program
+	var prog bytes.Buffer
+	for {
+		var msg ProcMessage
+		err := ws.ReadJSON(&msg)
+		if err != nil {
+			shutdownWs(ws, &mtx)
+			ProcLog.Print("error reading program", err)
+			return
+		}
+		if msg.Category == "EOF" {
+			break
+		}
+		prog.WriteString(msg.Body)
+	}
+
+	ProcLog.Println("program:", prog.String())
+
+	// write the program to a temporary file
+	// err := os.Mkdir("/temp/lua", os.FileMode(700))
+	// if err != nil {
+	// 	shutdownWs(ws, &mtx)
+	// 	ProcLog.Print("failed to make directory for program file")
+	// 	return
+	// }
+	// err = os.WriteFile("/temp/lua/prog.lua", prog.Bytes(), os.FileMode(660))
+	// if err != nil {
+	// 	shutdownWs(ws, &mtx)
+	// 	ProcLog.Print("failed to write program to file")
+	// 	return
+	// }
 
 	// these hold messages I/O for the lua process
 	stdinChan := make(chan []byte, 8)
@@ -24,7 +57,6 @@ func NewInstance(program string, ws *websocket.Conn) {
 	stderrChan := make(chan ProcMessage, 8)
 
 	// scan our process I/O
-	// wg.Add(3)
 	incomingMsgChan := ScanProcConnection(ctx, cancel, ws, &mtx)
 	SendProcConnection(ctx, cancel, ws, &mtx, stdoutChan, "stdout")
 	SendProcConnection(ctx, cancel, ws, &mtx, stderrChan, "stderr")
@@ -42,9 +74,11 @@ func NewInstance(program string, ws *websocket.Conn) {
 					stdinChan <- []byte(msg.Body)
 					ProcLog.Println(msg)
 				case "EOF":
-					// end stdin, no more input
-					ProcLog.Println("received EOF")
-					close(stdinChan)
+					if msg.Body == "stdin" {
+						// end stdin, no more input
+						ProcLog.Println("received EOF")
+						close(stdinChan)
+					}
 					return
 				default:
 					ProcLog.Printf("unsupported message category: %s", msg.Category)
@@ -55,7 +89,7 @@ func NewInstance(program string, ws *websocket.Conn) {
 
 	// run the program
 	wg.Add(1)
-	go RunLua(ctx, cancel, program, stdinChan, stdoutChan, stderrChan, &wg)
+	go RunLua(ctx, cancel, "cmd/procweb/test_lua/echo.lua", stdinChan, stdoutChan, stderrChan, &wg)
 
 	wg.Wait()
 	ProcLog.Println("program done")

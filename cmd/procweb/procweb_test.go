@@ -434,7 +434,7 @@ func testEchoLua(in []ProcMessage) bool {
 				break
 			}
 		}
-		msg := ProcMessage{"EOF", ""}
+		msg := ProcMessage{"EOF", "stdin"}
 		ourSock.WriteJSON(msg)
 	}()
 

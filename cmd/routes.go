@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"gihub.com/scrmbld/OpenWorkbook/cmd/procweb"
 	"gihub.com/scrmbld/OpenWorkbook/views"
 	"github.com/a-h/templ"
 	"github.com/gorilla/websocket"
@@ -14,30 +15,20 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 4096,
 }
 
+// create a new instance based on a request to a websocket
 func handleRun(w http.ResponseWriter, r *http.Request) {
-	c, err := upgrader.Upgrade(w, r, nil)
+	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade: ", err)
 		return
 	}
 
-	defer c.Close()
+	log.Println(w)
 
-	for {
-		mt, message, err := c.ReadMessage()
-		if err != nil {
-			log.Println("write:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			log.Println("write:", err)
-			break
-		}
-	}
+	procweb.NewInstance(ws)
 }
 
+// add all of our routes to the mux in one place
 func AddRoutes(
 	mux *http.ServeMux,
 	logger *log.Logger,

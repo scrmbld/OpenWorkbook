@@ -4,17 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
-)
-
-const (
-	writeWait        = 1 * time.Second
-	maxMessageSize   = 8192
-	pongWait         = 60 * time.Second
-	pingPeriod       = (pongWait * 9) / 10
-	closeGracePeriod = 10 * time.Second
 )
 
 func shutdownWs(ws *websocket.Conn, mtx *sync.Mutex) {
@@ -54,9 +45,6 @@ func ScanProcConnection(
 		defer shutdownWs(ws, mtx)
 		defer close(dest)
 
-		ws.SetReadLimit(maxMessageSize)
-		ws.SetReadDeadline(time.Now().Add(pongWait))
-		ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 		for {
 			var msg ProcMessage
 			err := ws.ReadJSON(&msg)
@@ -95,7 +83,6 @@ func SendProcConnection(
 ) {
 	go func() {
 		defer shutdownWs(ws, mtx)
-		ws.SetWriteDeadline(time.Now().Add(writeWait))
 		for {
 			select {
 			case <-ctx.Done():
