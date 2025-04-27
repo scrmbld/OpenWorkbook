@@ -47,59 +47,63 @@ function runCode() {
 	const socketUrl = `${socketProtocol}//${window.location.host}/echo`;
 	const socket = new WebSocket(socketUrl)
 
-	socket.addEventListener("close", (e) => {
+	socket.onclose = (e) => {
+		console.log(e);
 		console.log("closed");
 		deactivateTerm();
-	});
+	};
 
-	// send the code to the server before handing things over to the terminal
-	const codeSections = splitByIndex(codeText);
-	for (const s of codeSections) {
-		try {
-			let msg = new ProcMessage("code", s);
-			sendProcMsg(socket, msg);
-		} catch (err) {
-			console.log(`error sending code: ${err.message}`);
-			return;
+	socket.onopen = () => {
+
+		// send the code to the server before handing things over to the terminal
+		const codeSections = splitByIndex(codeText);
+		for (const s of codeSections) {
+			try {
+				let msg = new ProcMessage("code", s);
+				sendProcMsg(socket, msg);
+			} catch (err) {
+				console.log(`error sending code: ${err.message}`);
+				return;
+			}
 		}
-	}
-	let msg = new ProcMessage("EOF", "program");
-	sendProcMsg(socket, msg);
+		let msg = new ProcMessage("EOF", "program");
+		sendProcMsg(socket, msg);
 
-	socket.onmessage = (e) => {
-		console.log(e.data);
-		msg = JSON.parse(e.data);
-		// NOTE: this could get expensive
-		term.write(msg.body.replace(/\n/g, "\n\r"));
-	}
+		socket.onmessage = (e) => {
+			console.log(e.data);
+			msg = JSON.parse(e.data);
+			// NOTE: this could get expensive
+			term.write(msg.body.replace(/\n/g, "\n\r"));
+		}
 
-	function activateTerm() {
-		term.onKey((keyObj) => {
-			// make <C-d> send EOF
-			if (keyObj.ctrlKey && keyObj.key === 'd') {
-				msg = new ProcMessage("EOF", "stdin")
+		function activateTerm() {
+			term.onKey((keyObj) => {
+				// make <C-d> send EOF
+				if (keyObj.ctrlKey && keyObj.key === 'd') {
+					msg = new ProcMessage("EOF", "stdin")
+					try {
+						sendProcMsg(socket, msg);
+					} catch (err) {
+						console.log(err.message);
+						return;
+					}
+					return;
+				}
+
+				keyStr = keyObj.key.replace(/\r/g, "\n\r");
+				term.write(keyStr);
+				msg = new ProcMessage("stdin", keyStr);
 				try {
 					sendProcMsg(socket, msg);
 				} catch (err) {
-					console.log(err.message);
+					console.log(err);
 					return;
 				}
-				return;
-			}
+			});
+		}
 
-			keyStr = keyObj.key.replace(/\r/g, "\n\r");
-			term.write(keyStr);
-			msg = new ProcMessage("stdin", keyStr);
-			try {
-				sendProcMsg(socket, msg);
-			} catch (err) {
-				console.log(err);
-				return;
-			}
-		});
+		activateTerm();
 	}
-
-	activateTerm();
 
 	function deactivateTerm() {
 		term.onKey(undefined);

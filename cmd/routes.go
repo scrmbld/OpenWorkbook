@@ -23,8 +23,6 @@ func handleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(w)
-
 	procweb.NewInstance(ws)
 }
 
@@ -34,12 +32,6 @@ func AddRoutes(
 	logger *log.Logger,
 ) {
 	mux.Handle("/index", templ.Handler(views.Index("")))
-	mux.Handle("/startcode", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		code := r.PostFormValue("code-area")
-		log.Println(code)
-
-		http.Redirect(w, r, "/index", http.StatusSeeOther)
-	}))
 
 	// static files (at this stage, just images and CSS)
 	fs := http.FileServer(http.Dir("./static"))

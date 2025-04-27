@@ -38,18 +38,18 @@ func NewInstance(ws *websocket.Conn) {
 	ProcLog.Println("program:", prog.String())
 
 	// write the program to a temporary file
-	// err := os.Mkdir("/temp/lua", os.FileMode(700))
-	// if err != nil {
-	// 	shutdownWs(ws, &mtx)
-	// 	ProcLog.Print("failed to make directory for program file")
-	// 	return
-	// }
-	// err = os.WriteFile("/temp/lua/prog.lua", prog.Bytes(), os.FileMode(660))
-	// if err != nil {
-	// 	shutdownWs(ws, &mtx)
-	// 	ProcLog.Print("failed to write program to file")
-	// 	return
-	// }
+	err := os.MkdirAll("/tmp/lua", 0o744)
+	if err != nil {
+		shutdownWs(ws, &mtx)
+		ProcLog.Print("failed to make directory for program file:", err)
+		return
+	}
+	err = os.WriteFile("/tmp/lua/prog.lua", prog.Bytes(), os.FileMode(0o600))
+	if err != nil {
+		shutdownWs(ws, &mtx)
+		ProcLog.Print("failed to write program to file:", err)
+		return
+	}
 
 	// these hold messages I/O for the lua process
 	stdinChan := make(chan []byte, 8)
@@ -89,7 +89,7 @@ func NewInstance(ws *websocket.Conn) {
 
 	// run the program
 	wg.Add(1)
-	go RunLua(ctx, cancel, "cmd/procweb/test_lua/echo.lua", stdinChan, stdoutChan, stderrChan, &wg)
+	go RunLua(ctx, cancel, "/tmp/lua/prog.lua", stdinChan, stdoutChan, stderrChan, &wg)
 
 	wg.Wait()
 	ProcLog.Println("program done")
