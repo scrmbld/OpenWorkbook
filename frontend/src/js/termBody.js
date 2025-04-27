@@ -33,7 +33,7 @@ function init() {
 		return;
 	}
 
-	term._initialized = true
+	term._initialized = true;
 
 }
 
@@ -48,8 +48,7 @@ function runCode() {
 	const socket = new WebSocket(socketUrl)
 
 	socket.onclose = (e) => {
-		console.log(e);
-		console.log("closed");
+		console.log(`closed: ${e.code}`);
 		deactivateTerm();
 	};
 
@@ -67,7 +66,11 @@ function runCode() {
 			}
 		}
 		let msg = new ProcMessage("EOF", "program");
-		sendProcMsg(socket, msg);
+		try {
+			sendProcMsg(socket, msg);
+		} catch (err) {
+			console.log(`error sending code EOF: ${err.message}`);
+		}
 
 		socket.onmessage = (e) => {
 			console.log(e.data);
@@ -77,27 +80,41 @@ function runCode() {
 		}
 
 		function activateTerm() {
+			term.clear();
+
+			const newTheme = { background: "#000000" };
+			term.options.theme = { ...newTheme };
+
+			term.attachCustomKeyEventHandler((e) => {
+				if (socket.readyState == socket.OPEN) {
+					// make <C-d> send EOF
+					if (e.ctrlKey && e.key === 'd') {
+						msg = new ProcMessage("EOF", "stdin");
+						try {
+							sendProcMsg(socket, msg);
+						} catch (err) {
+							console.log(`error seding stdin EOF: ${err.message}`);
+						}
+						return false;
+					}
+
+				}
+
+				return true;
+			});
+
 			term.onKey((keyObj) => {
-				// make <C-d> send EOF
-				if (keyObj.ctrlKey && keyObj.key === 'd') {
-					msg = new ProcMessage("EOF", "stdin")
+				if (socket.readyState == socket.OPEN) {
+
+					let keyStr = keyObj.key.replace(/\r/g, "\n\r");
+					term.write(keyStr);
+					msg = new ProcMessage("stdin", keyStr);
 					try {
 						sendProcMsg(socket, msg);
 					} catch (err) {
-						console.log(err.message);
+						console.log(err);
 						return;
 					}
-					return;
-				}
-
-				keyStr = keyObj.key.replace(/\r/g, "\n\r");
-				term.write(keyStr);
-				msg = new ProcMessage("stdin", keyStr);
-				try {
-					sendProcMsg(socket, msg);
-				} catch (err) {
-					console.log(err);
-					return;
 				}
 			});
 		}
@@ -106,7 +123,8 @@ function runCode() {
 	}
 
 	function deactivateTerm() {
-		term.onKey(undefined);
+		term.write("Done!\n\r");
+		term.blur();
 	}
 }
 

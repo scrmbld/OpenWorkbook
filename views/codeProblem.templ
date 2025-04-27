@@ -3,6 +3,7 @@ package views
 css codearea() {
 	resize: none;
 	display: block;
+	width: 100%;
 }
 
 css submitButton() {
@@ -10,12 +11,23 @@ css submitButton() {
 }
 
 templ codeProblem(starterCode string) {
-	<textarea
-		class={ codearea() }
-		name="code-area"
-		id="code-area"
-		rows="8"
-		cols="80"
-	>{ starterCode }</textarea>
-	<button id="run-button" class={ submitButton() }>Run</button>
+	<div class="container code-problem">
+		<div class="row">
+			<div class="col-md">
+				<textarea
+					class={ codearea() }
+					name="code-area"
+					id="code-area"
+					rows="8"
+					cols="80"
+				>{ starterCode }</textarea>
+				<button id="run-button" class={ submitButton() }>Run</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md terminal-container">
+				<div id="terminal"></div>
+			</div>
+		</div>
+	</div>
 }
