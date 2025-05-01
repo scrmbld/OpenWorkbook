@@ -1,33 +1,33 @@
 package views
 
+import "math/rand"
+import "fmt"
+
 css codearea() {
 	resize: none;
 	display: block;
 	width: 100%;
 }
 
-css submitButton() {
-	display: block;
-}
-
 templ codeProblem(starterCode string) {
-	<div class="container code-problem">
-		<div class="row">
-			<div class="col-md">
-				<textarea
-					class={ codearea() }
-					name="code-area"
-					id="code-area"
-					rows="8"
-					cols="80"
-				>{ starterCode }</textarea>
-				<button id="run-button" class={ submitButton() }>Run</button>
-			</div>
+	// generate a random ID -- technically collisions are possible but extremely unlikely
+	{{ id := fmt.Sprintf("%d", rand.Int63()) }}
+	<div class="row">
+		<div class="col-md-12">
+			<textarea
+				class={ codearea() }
+				id={ fmt.Sprintf("codearea%s", id) }
+				rows="8"
+				cols="80"
+			>{ starterCode }</textarea>
 		</div>
-		<div class="row">
-			<div class="col-md terminal-container">
-				<div id="terminal"></div>
-			</div>
+	</div>
+	<div class="row">
+		<button id={ fmt.Sprintf("coderun%s", id) } class="run-code">Run</button>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+			<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
 		</div>
 	</div>
 }

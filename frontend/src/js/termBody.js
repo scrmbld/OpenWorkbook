@@ -21,27 +21,41 @@ function splitByIndex(s) {
 	return result;
 }
 
-// start the terminal
-var term = new Terminal({
-	cursorBlink: true
-});
-let termElement = document.getElementById('terminal');
-term.open(termElement);
-
-function init() {
-	if (term._initialized) {
-		return;
+// start the terminals and add button event listeners
+let terms = new Map();
+function load() {
+	let termElements = document.querySelectorAll('.terminal');
+	console.log(termElements)
+	for (t of termElements) {
+		console.log(t);
+		let termId = t.id.replace("codeterminal", "");
+		let newTerm = new Terminal({
+			cursorBlink: true
+		});
+		newTerm.open(t);
+		newTerm._initialized = true;
+		terms.set(termId, newTerm);
 	}
 
-	term._initialized = true;
-
+	let runButtons = document.querySelectorAll('button.run-code')
+	for (b of runButtons) {
+		b.onclick = runCode;
+	}
 }
 
-init();
+document.addEventListener("DOMContentLoaded", () => {
+	load();
+});
+
+function hi() {
+	console.log("hi :3");
+}
 
 // sends our code to the server to run and connects to the instance that's created
-function runCode() {
-	const codeText = document.getElementById("code-area").value;
+function runCode(e) {
+	const codeId = e.target.id.replace("coderun", "");
+	const codeText = document.getElementById("codearea" + codeId).value;
+	const term = terms.get(codeId);
 
 	const socketProtocol = window.location.protocol === 'https' ? 'wss:' : 'ws:';
 	const socketUrl = `${socketProtocol}//${window.location.host}/echo`;
@@ -127,6 +141,3 @@ function runCode() {
 		term.blur();
 	}
 }
-
-const runBtn = document.getElementById("run-button");
-runBtn.addEventListener("click", runCode);

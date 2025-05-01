@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"os"
 	"reflect"
 	"slices"
 	"strings"
@@ -370,14 +371,48 @@ func msgCategorySlice(r *rand.Rand, lenMin int, lenMax int, category string) []P
 func testHelloLua(in []ProcMessage) bool {
 	var wg sync.WaitGroup
 
+	f, err := os.Open("test_lua/hello.lua")
+	if err != nil {
+		return false
+	}
+
 	ourSock, instanceSock := createSockets()
-	NewInstance("test_lua/hello.lua", instanceSock)
+	go NewInstance(instanceSock)
 
 	// write in to ourSock
 	// this shouldn't do anything in this case because hello.lua doesn't read any input
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		// program
+		for {
+			codeBytes := make([]byte, 1024)
+			n, err := f.Read(codeBytes)
+			if err != nil {
+				if errors.Is(io.EOF, err) {
+					var codeMsg = ProcMessage{Category: "code", Body: string(codeBytes[:n])}
+					err := ourSock.WriteJSON(codeMsg)
+					if err != nil {
+						panic(err)
+					}
+					break
+				}
+				panic(err)
+			}
+
+			var codeMsg = ProcMessage{Category: "code", Body: string(codeBytes[:n])}
+			err = ourSock.WriteJSON(codeMsg)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		var codeEof = ProcMessage{Category: "EOF", Body: "code"}
+		err = ourSock.WriteJSON(codeEof)
+		if err != nil {
+			panic(err)
+		}
 		for _, v := range in {
 			err := ourSock.WriteJSON(v)
 			if err != nil {
@@ -417,14 +452,50 @@ func testHelloLua(in []ProcMessage) bool {
 func testEchoLua(in []ProcMessage) bool {
 	var wg sync.WaitGroup
 
+	// read the program from a file
+	f, err := os.Open("test_lua/echo.lua")
+	if err != nil {
+		return false
+	}
+
 	// start the instance
 	ourSock, instanceSock := createSockets()
-	go NewInstance("test_lua/echo.lua", instanceSock)
+	go NewInstance(instanceSock)
 
 	// write to in sock
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		// program
+		for {
+			codeBytes := make([]byte, 1024)
+			n, err := f.Read(codeBytes)
+			if err != nil {
+				if errors.Is(io.EOF, err) {
+					var codeMsg = ProcMessage{Category: "code", Body: string(codeBytes[:n])}
+					err := ourSock.WriteJSON(codeMsg)
+					if err != nil {
+						panic(err)
+					}
+					break
+				}
+				panic(err)
+			}
+
+			var codeMsg = ProcMessage{Category: "code", Body: string(codeBytes[:n])}
+			err = ourSock.WriteJSON(codeMsg)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		var codeEof = ProcMessage{Category: "EOF", Body: "code"}
+		err = ourSock.WriteJSON(codeEof)
+		if err != nil {
+			panic(err)
+		}
+
+		// stdin
 		for _, v := range in {
 			err := ourSock.WriteJSON(v)
 			if err != nil {
@@ -443,6 +514,7 @@ func testEchoLua(in []ProcMessage) bool {
 	for {
 		var currentMsg ProcMessage
 		err := ourSock.ReadJSON(&currentMsg)
+		fmt.Println(currentMsg)
 		if err != nil {
 			if websocket.IsCloseError(err, 1000) {
 				fmt.Println("done reading")
@@ -456,6 +528,8 @@ func testEchoLua(in []ProcMessage) bool {
 	}
 
 	wg.Wait()
+
+	// evaluate the output
 	combined_stdout := combineCategory(outMsgs, "stdout")
 	combined_stderr := combineCategory(outMsgs, "stderr")
 	combined_stdin := combineCategory(in, "stdin")

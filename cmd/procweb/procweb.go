@@ -72,11 +72,9 @@ func NewInstance(ws *websocket.Conn) {
 				switch msg.Category {
 				case "stdin":
 					stdinChan <- []byte(msg.Body)
-					ProcLog.Println(msg)
 				case "EOF":
 					if msg.Body == "stdin" {
 						// end stdin, no more input
-						ProcLog.Println("received EOF")
 						close(stdinChan)
 					}
 					return
