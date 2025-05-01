@@ -12,22 +12,26 @@ css codearea() {
 templ codeProblem(starterCode string) {
 	// generate a random ID -- technically collisions are possible but extremely unlikely
 	{{ id := fmt.Sprintf("%d", rand.Int63()) }}
-	<div class="row">
-		<div class="col-md-12">
-			<textarea
-				class={ codearea() }
-				id={ fmt.Sprintf("codearea%s", id) }
-				rows="8"
-				cols="80"
-			>{ starterCode }</textarea>
+	<div class="container">
+		<div class="row">
+			<div class="col-md">
+				<textarea
+					class={ codearea() }
+					id={ fmt.Sprintf("codearea%s", id) }
+					rows="8"
+					cols="80"
+				>{ starterCode }</textarea>
+			</div>
 		</div>
-	</div>
-	<div class="row">
-		<button id={ fmt.Sprintf("coderun%s", id) } class="run-code">Run</button>
-	</div>
-	<div class="row">
-		<div class="col-md-12">
-			<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
+		<div class="row">
+			<div class="col-md">
+				<button id={ fmt.Sprintf("coderun%s", id) } class="run-code">Run</button>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md">
+				<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
+			</div>
 		</div>
 	</div>
 }
