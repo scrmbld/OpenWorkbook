@@ -31,6 +31,20 @@ var httpServerState struct {
 
 var upgrader = websocket.Upgrader{}
 
+var serverStarted bool = false
+
+// helper functions
+// ===========================
+
+// given a nested slice, concatenate all of the items in the input and return the result
+func flattenSlice[T any](ts [][]T) []T {
+	var result []T
+	for _, v := range ts {
+		result = append(result, v...)
+	}
+	return result
+}
+
 func startServer() {
 	if httpServerState.started == true {
 		return
@@ -58,20 +72,6 @@ func startServer() {
 		}
 	}()
 
-}
-
-var serverStarted bool = false
-
-// helper functions
-// ===========================
-
-// given a nested slice, concatenate all of the items in the input and return the result
-func flattenSlice[T any](ts [][]T) []T {
-	var result []T
-	for _, v := range ts {
-		result = append(result, v...)
-	}
-	return result
 }
 
 // create two sockets that are connected to each other
