@@ -269,6 +269,8 @@ func NewInstance(ws *websocket.Conn) {
 
 	// read the program
 	var prog bytes.Buffer
+	prog.WriteString("io.stdout:setvbuf(\"no\")\nio.stderr:setvbuf(\"no\")\n")
+
 	for {
 		var msg ProcMessage
 		err := ws.ReadJSON(&msg)
