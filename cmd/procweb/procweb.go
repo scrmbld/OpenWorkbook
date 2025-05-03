@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -208,7 +209,7 @@ func SendProcConnection(
 // run a lua program
 func runLua(ctx context.Context,
 	cancel context.CancelFunc,
-	program string,
+	sourceDir string,
 	stdinChan chan []byte,
 	stdoutChan chan ProcMessage,
 	stderrChan chan ProcMessage,
@@ -217,7 +218,7 @@ func runLua(ctx context.Context,
 	defer wg.Done()
 
 	// prepare the process
-	proc := exec.CommandContext(ctx, "lua", program)
+	proc := exec.CommandContext(ctx, "bin/starter", sourceDir)
 
 	stdin, err := proc.StdinPipe()
 	if err != nil {
@@ -285,13 +286,14 @@ func NewInstance(ws *websocket.Conn) {
 	ProcLog.Println("program:", prog.String())
 
 	// write the program to a temporary file
-	err := os.MkdirAll("/tmp/lua", 0o744)
+	instancePath, err := os.MkdirTemp("/tmp", "luasource-")
 	if err != nil {
 		shutdownWs(ws, &mtx)
 		ProcLog.Print("failed to make directory for program file:", err)
 		return
 	}
-	err = os.WriteFile("/tmp/lua/prog.lua", prog.Bytes(), os.FileMode(0o600))
+	defer os.RemoveAll(instancePath)
+	err = os.WriteFile(path.Join(instancePath, "main.lua"), prog.Bytes(), os.FileMode(0o600))
 	if err != nil {
 		shutdownWs(ws, &mtx)
 		ProcLog.Print("failed to write program to file:", err)
@@ -334,7 +336,7 @@ func NewInstance(ws *websocket.Conn) {
 
 	// run the program
 	wg.Add(1)
-	go runLua(ctx, cancel, "/tmp/lua/prog.lua", stdinChan, stdoutChan, stderrChan, &wg)
+	go runLua(ctx, cancel, instancePath, stdinChan, stdoutChan, stderrChan, &wg)
 
 	wg.Wait()
 	ProcLog.Println("program done")

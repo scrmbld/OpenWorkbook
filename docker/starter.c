@@ -9,7 +9,6 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Please pass the lua source directory as an argument\n");
 		return 1;
 	}
-	char *pwd = getenv("PWD");
 
 	char *sourceDir = malloc(1024*sizeof(char)); // 64 more just to be extra safe!
 
@@ -20,9 +19,8 @@ int main(int argc, char **argv) {
 	}
 
 	printf("%s\n", sourceDir);
-	char *args[] = {"docker", "run", "-t", "-i", "-v", sourceDir, "runlua", NULL};
+	char *args[] = {"docker", "run", "-i", "-v", sourceDir, "runlua:latest", NULL};
 	int code = execvp("/usr/bin/docker", args);
-	printf("%d\n", code);
 
 	free(sourceDir);
 }
