@@ -1,10 +1,10 @@
-server: templ frontend
+server: templ
 	go build -o ./bin/server ./cmd
 
 templ:
 	templ generate -path ./views
 
-frontend:
+frontend: $(wildcard frontend/src/*) frontend/webpack.config.js
 	npm --prefix frontend run build
 
 luadocker: docker/lua/Dockerfile
@@ -13,7 +13,7 @@ luadocker: docker/lua/Dockerfile
 starter: docker/starter.c
 	gcc -g docker/starter.c -o bin/starter
 
-all: luadocker starter templ server
+all: luadocker starter templ server frontend
 
 # TODO: figure out how to restrict access to this binary
 # install: starter
@@ -22,3 +22,6 @@ all: luadocker starter templ server
 # 	chmod ug+s /usr/bin/starter
 # 	chown /usr/bin/starter root
 # 	chgrp /usr/bin/starter root
+#
+clean:
+	rm bin/* static/*

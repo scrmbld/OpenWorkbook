@@ -10,13 +10,12 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "css-loader": "^7.1.2",
     "style-loader": "^4.0.0",
     "webpack": "^5.99.6",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
     "@xterm/xterm": "^5.5.0",
-    "bootstrap": "^5.3.5"
+    "css-loader": "^7.1.2"
   }
 }

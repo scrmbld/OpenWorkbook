@@ -2,23 +2,18 @@ package views
 
 templ Index(starterCode string) {
 	@base("index") {
-		<script src="/termBody.bundle.js"></script>
-		<div class="container">
-			<div class="row">
-				<div class="col-md">
-					<h1>Hello World!</h1>
-				</div>
-			</div>
-			<div class="row">
-				if starterCode == "" {
-					@codeProblem("print('hello, world!')")
-				} else {
-					@codeProblem(starterCode)
-				}
-			</div>
-			<div class="row">
-				@codeProblem("print(':3')")
-			</div>
+		<div class="bg-violet-200">
+			<h1 class="text-large text-black dark:text-white">Hello World!</h1>
+		</div>
+		<div class="row">
+			if starterCode == "" {
+				@codeProblem("print('hello, world!')")
+			} else {
+				@codeProblem(starterCode)
+			}
+		</div>
+		<div class="row">
+			@codeProblem("print(':3')")
 		</div>
 	}
 }

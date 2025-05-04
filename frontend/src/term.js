@@ -1,3 +1,6 @@
+import '@xterm/xterm';
+import '@xterm/xterm/css/xterm.css';
+
 const { Terminal } = require("@xterm/xterm");
 
 class ProcMessage {
@@ -13,7 +16,7 @@ function sendProcMsg(ws, msg) {
 }
 
 function splitByIndex(s) {
-	result = [];
+	let result = [];
 	for (let i = 0; i < s.length; i += 512) {
 		result.push(s.slice(i, i + 512));
 	}
@@ -25,9 +28,7 @@ function splitByIndex(s) {
 let terms = new Map();
 function load() {
 	let termElements = document.querySelectorAll('.terminal');
-	console.log(termElements)
-	for (t of termElements) {
-		console.log(t);
+	for (let t of termElements) {
 		let termId = t.id.replace("codeterminal", "");
 		let newTerm = new Terminal({
 			cursorBlink: true
@@ -38,7 +39,7 @@ function load() {
 	}
 
 	let runButtons = document.querySelectorAll('button.run-code')
-	for (b of runButtons) {
+	for (let b of runButtons) {
 		b.onclick = runCode;
 	}
 }
@@ -46,10 +47,6 @@ function load() {
 document.addEventListener("DOMContentLoaded", () => {
 	load();
 });
-
-function hi() {
-	console.log("hi :3");
-}
 
 // sends our code to the server to run and connects to the instance that's created
 function runCode(e) {

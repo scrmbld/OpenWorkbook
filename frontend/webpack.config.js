@@ -3,9 +3,8 @@ const path = require("path")
 module.exports = {
 	mode: 'development',
 	entry: {
-		index: './src/js/index.js',
-		termHeader: './src/js/termHeader.js',
-		termBody: './src/js/termBody.js',
+		index: './src/index.js',
+		term: './src/term.js',
 	},
 	output: {
 		filename: '[name].bundle.js',
