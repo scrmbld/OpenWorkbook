@@ -4,8 +4,10 @@ server: templ
 templ:
 	templ generate -path ./views
 
-frontend: $(wildcard frontend/src/*) frontend/webpack.config.js
-	npm --prefix frontend run build
+frontend: $(wildcard ./src/*)
+	npx tailwindcss -i src/input.css -o src/output.css
+	rm -r dist/* || true
+	cp -r src/* dist/.
 
 luadocker: docker/lua/Dockerfile
 	docker build -t runlua:latest ./docker/lua/

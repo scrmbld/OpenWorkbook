@@ -33,8 +33,8 @@ func AddRoutes(
 ) {
 	mux.Handle("/index", templ.Handler(views.Index("")))
 
-	// static files (at this stage, just images and CSS)
-	fs := http.FileServer(http.Dir("./static"))
+	// static files
+	fs := http.FileServer(http.Dir("./dist"))
 	mux.Handle("/", fs)
 	mux.HandleFunc("/echo", handleRun)
 }
