@@ -6,8 +6,11 @@ templ:
 
 frontend: $(wildcard ./src/*)
 	npx tailwindcss -i src/input.css -o src/output.css
-	rm -r dist/* || true
+	ls src
+	rm -rf dist/*
 	cp -r src/* dist/.
+	cp ./node_modules/@xterm/xterm/css/xterm.css dist/xterm.css
+	cp ./node_modules/@xterm/xterm/lib/xterm.js dist/xterm.js
 
 luadocker: docker/lua/Dockerfile
 	docker build -t runlua:latest ./docker/lua/

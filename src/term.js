@@ -1,8 +1,3 @@
-import '@xterm/xterm';
-import '@xterm/xterm/css/xterm.css';
-
-const { Terminal } = require("@xterm/xterm");
-
 class ProcMessage {
 	constructor(category, body) {
 		this.category = category;

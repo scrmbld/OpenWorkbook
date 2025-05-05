@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gihub.com/scrmbld/OpenWorkbook/cmd/procweb"
-	"gihub.com/scrmbld/OpenWorkbook/views"
+	"gihub.com/scrmbld/OpenWorkbook/views/pages"
 	"github.com/a-h/templ"
 	"github.com/gorilla/websocket"
 )
@@ -31,7 +31,7 @@ func AddRoutes(
 	mux *http.ServeMux,
 	logger *log.Logger,
 ) {
-	mux.Handle("/index", templ.Handler(views.Index("")))
+	mux.Handle("/index", templ.Handler(pages.Index("")))
 
 	// static files
 	fs := http.FileServer(http.Dir("./dist"))

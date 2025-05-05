@@ -1,0 +1,22 @@
+package pages
+
+import "gihub.com/scrmbld/OpenWorkbook/views/components"
+import "gihub.com/scrmbld/OpenWorkbook/views/templates"
+
+templ Index(starterCode string) {
+	@templates.Base("index") {
+		<div class="">
+			<h1 class="text-large text-black dark:text-white">Hello World!</h1>
+		</div>
+		<div class="row">
+			if starterCode == "" {
+				@components.CodeProblem("print('hello, world!')")
+			} else {
+				@components.CodeProblem(starterCode)
+			}
+		</div>
+		<div class="row">
+			@components.CodeProblem("print(':3')")
+		</div>
+	}
+}

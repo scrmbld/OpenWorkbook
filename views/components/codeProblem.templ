@@ -1,4 +1,4 @@
-package views
+package components
 
 import "math/rand"
 import "fmt"
@@ -9,7 +9,7 @@ css codearea() {
 	width: 100%;
 }
 
-templ codeProblem(starterCode string) {
+templ CodeProblem(starterCode string) {
 	// generate a random ID -- technically collisions are possible but extremely unlikely
 	{{ id := fmt.Sprintf("%d", rand.Int63()) }}
 	<div class="container">

@@ -1,6 +1,6 @@
-package views
+package templates
 
-templ base(title string) {
+templ Base(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -8,7 +8,9 @@ templ base(title string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/output.css"/>
-			<script src="/index.js"></script>
+			<link rel="stylesheet" href="/xterm.css"/>
+			<script src="/term.js"></script>
+			<script src="/xterm.js"></script>
 		</head>
 		<body>
 			{ children... }
