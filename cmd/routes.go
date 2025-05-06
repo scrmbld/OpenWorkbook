@@ -31,7 +31,8 @@ func AddRoutes(
 	mux *http.ServeMux,
 	logger *log.Logger,
 ) {
-	mux.Handle("/index", templ.Handler(pages.Index("")))
+	mux.Handle("/index", templ.Handler(pages.Home("")))
+	mux.Handle("/courses", templ.Handler(pages.Courses("")))
 
 	// static files
 	fs := http.FileServer(http.Dir("./dist"))

@@ -1,0 +1,16 @@
+package components
+
+templ NavBar() {
+	<nav class="grid grid-cols-2 lg:grid-cols-3 bg-blue-900">
+		<div class="h-full ml-4 flex items-center">
+			<a href="/index">
+				@Icon(40, "#fffff1")
+			</a>
+		</div>
+		<ul class="grid grid-cols-3 col-start-2 lg:col-start-3 list-none text-center">
+			<li class="text-2xl color-white grid bg-teal-500 py-2 hover:bg-white"><a href="/courses">Courses</a></li>
+			<li class="text-2xl color-white grid text-white py-2 hover:bg-white hover:text-black"><a href="/index">Home</a></li>
+			<li class="text-2xl color-white grid text-white py-2 hover:bg-white hover:text-black"><a href="/about">About</a></li>
+		</ul>
+	</nav>
+}

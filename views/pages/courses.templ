@@ -1,0 +1,32 @@
+package pages
+
+import "gihub.com/scrmbld/OpenWorkbook/views/components"
+import "gihub.com/scrmbld/OpenWorkbook/views/templates"
+
+templ Courses(starterCode string) {
+	@templates.Base("index") {
+		@components.NavBar()
+		<div class="bg-black py-8">
+			<div class="bg-teal-500 mx-4 p-4 rounded-lg">
+				<h1 class="text-3xl text-black text-center">Take a course!</h1>
+			</div>
+			<div class="grid grid-cols-3 bg-white mt-8 mx-6 py-4 px-4 rounded-lg">
+				<div class="grid mx-4 px-4 py-4 items-center text-center text-black border-3 border-stone-500 rounded-lg">
+					<h1>Course 1</h1>
+					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quisquam iure ipsa consequuntur totam laborum tenetur dolorem alias sit itaque omnis, placeat minima doloribus quibusdam iusto maiores exercitationem sequi impedit sapiente!</p>
+					<button class="mt-4 p-2 bg-blue-900 text-white rounded-lg w-[50%] justify-self-center hover:bg-teal-500 hover:text-black">Start Learning</button>
+				</div>
+				<div class="grid mx-4 px-4 py-4 items-center text-center text-black border-3 border-stone-500 rounded-lg">
+					<h1>Course 2</h1>
+					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quisquam iure ipsa consequuntur totam laborum tenetur dolorem alias sit itaque omnis, placeat minima doloribus quibusdam iusto maiores exercitationem sequi impedit sapiente!</p>
+					<button class="mt-4 p-2 bg-blue-900 text-white rounded-lg w-[50%] justify-self-center hover:bg-teal-500 hover:text-black">Start Learning</button>
+				</div>
+				<div class="grid mx-4 px-4 py-4 items-center text-center text-black border-3 border-stone-500 rounded-lg">
+					<h1>Course 3</h1>
+					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quisquam iure ipsa consequuntur totam laborum tenetur dolorem alias sit itaque omnis, placeat minima doloribus quibusdam iusto maiores exercitationem sequi impedit sapiente!</p>
+					<button class="mt-4 p-2 bg-blue-900 text-white rounded-lg w-[50%] justify-self-center hover:bg-teal-500 hover:text-black">Start Learning</button>
+				</div>
+			</div>
+		</div>
+	}
+}
