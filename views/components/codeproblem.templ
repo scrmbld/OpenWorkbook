@@ -3,35 +3,19 @@ package components
 import "math/rand"
 import "fmt"
 
-css codearea() {
-	resize: none;
-	display: block;
-	width: 100%;
-}
-
 templ CodeProblem(starterCode string) {
 	// generate a random ID -- technically collisions are possible but extremely unlikely
 	{{ id := fmt.Sprintf("%d", rand.Int63()) }}
-	<div class="container">
-		<div class="row">
-			<div class="col-md">
-				<textarea
-					class={ codearea() }
-					id={ fmt.Sprintf("codearea%s", id) }
-					rows="8"
-					cols="80"
-				>{ starterCode }</textarea>
-			</div>
+	<div class="grid grid-cols-2 my-8">
+		<div class="relative pr-4">
+			<textarea
+				id={ fmt.Sprintf("codearea%s", id) }
+				class="w-full h-full text-lg text-white border-3 border-teal-500 rounded-lg"
+			>{ starterCode }</textarea>
 		</div>
-		<div class="row">
-			<div class="col-md">
-				<button id={ fmt.Sprintf("coderun%s", id) } class="run-code">Run</button>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-md">
-				<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
-			</div>
+		<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
+		<div class="flex justify-end col-start-2 mt-2">
+			<button id={ fmt.Sprintf("coderun%s", id) } onclick="runCode" class="run-code px-3 py-2 text-xl text-black bg-teal-500 hover:bg-teal-400 rounded-xl">Run</button>
 		</div>
 	</div>
 }

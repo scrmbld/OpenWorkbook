@@ -1,6 +1,20 @@
 package templates
 
-templ Base(title string) {
+import "gihub.com/scrmbld/OpenWorkbook/views/components"
+
+type linkImport struct {
+	URL  templ.SafeURL
+	Type string
+}
+
+func newLinkImport(URL string, MIME string) linkImport {
+	return linkImport{
+		URL:  templ.URL(URL),
+		Type: MIME,
+	}
+}
+
+templ base(title string, imports []linkImport) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -8,12 +22,35 @@ templ Base(title string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/output.css"/>
-			<link rel="stylesheet" href="/xterm.css"/>
-			<script src="/term.js"></script>
-			<script src="/xterm.js"></script>
+			for _,v := range(imports) {
+				if v.Type == "text/css" {
+					<link rel="stylesheet" href={ string(v.URL) }/>
+				} else {
+					<script src={ string(v.URL) }></script>
+				}
+			}
+			<link rel="stylesheet" href="/prism.css"/>
+			<script src="/prism.js"></script>
 		</head>
 		<body>
+			@components.NavBar()
 			{ children... }
 		</body>
 	</html>
+}
+
+templ NoTerm(title string) {
+	@base(title, []linkImport{}) {
+		{ children... }
+	}
+}
+
+templ WithTerm(title string) {
+	@base(title, []linkImport{
+		newLinkImport("/xterm.js", "text/javascript"),
+		newLinkImport("/xterm.css", "text/css"),
+		newLinkImport("/term.js", "text/javascript"),
+	}) {
+		{ children... }
+	}
 }

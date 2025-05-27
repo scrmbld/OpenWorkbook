@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"gihub.com/scrmbld/OpenWorkbook/cmd/procweb"
 	"gihub.com/scrmbld/OpenWorkbook/views/pages"
+	"gihub.com/scrmbld/OpenWorkbook/views/pages/love"
 	"github.com/a-h/templ"
 	"github.com/gorilla/websocket"
 )
@@ -31,8 +33,12 @@ func AddRoutes(
 	mux *http.ServeMux,
 	logger *log.Logger,
 ) {
-	mux.Handle("/index", templ.Handler(pages.Home("")))
-	mux.Handle("/courses", templ.Handler(pages.Courses("")))
+	mux.Handle("/index", templ.Handler(pages.Home()))
+	mux.Handle("/courses", templ.Handler(pages.Courses()))
+	mux.Handle("/love", templ.Handler(love.LoveHome()))
+	for i, v := range love.Chapters {
+		mux.Handle(fmt.Sprintf("/love/%d", i), templ.Handler(v))
+	}
 
 	// static files
 	fs := http.FileServer(http.Dir("./dist"))

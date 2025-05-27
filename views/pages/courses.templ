@@ -1,32 +1,35 @@
 package pages
 
-import "gihub.com/scrmbld/OpenWorkbook/views/components"
 import "gihub.com/scrmbld/OpenWorkbook/views/templates"
+import "gihub.com/scrmbld/OpenWorkbook/views/components"
 
-templ Courses(starterCode string) {
-	@templates.Base("index") {
-		@components.NavBar()
-		<div class="bg-black py-8">
-			<div class="bg-teal-500 mx-4 p-4 rounded-lg">
-				<h1 class="text-3xl text-black text-center">Take a course!</h1>
-			</div>
-			<div class="grid grid-cols-3 bg-white mt-8 mx-6 py-4 px-4 rounded-lg">
-				<div class="grid mx-4 px-4 py-4 items-center text-center text-black border-3 border-stone-500 rounded-lg">
-					<h1>Course 1</h1>
-					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quisquam iure ipsa consequuntur totam laborum tenetur dolorem alias sit itaque omnis, placeat minima doloribus quibusdam iusto maiores exercitationem sequi impedit sapiente!</p>
-					<button class="mt-4 p-2 bg-blue-900 text-white rounded-lg w-[50%] justify-self-center hover:bg-teal-500 hover:text-black">Start Learning</button>
-				</div>
-				<div class="grid mx-4 px-4 py-4 items-center text-center text-black border-3 border-stone-500 rounded-lg">
-					<h1>Course 2</h1>
-					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quisquam iure ipsa consequuntur totam laborum tenetur dolorem alias sit itaque omnis, placeat minima doloribus quibusdam iusto maiores exercitationem sequi impedit sapiente!</p>
-					<button class="mt-4 p-2 bg-blue-900 text-white rounded-lg w-[50%] justify-self-center hover:bg-teal-500 hover:text-black">Start Learning</button>
-				</div>
-				<div class="grid mx-4 px-4 py-4 items-center text-center text-black border-3 border-stone-500 rounded-lg">
-					<h1>Course 3</h1>
-					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quisquam iure ipsa consequuntur totam laborum tenetur dolorem alias sit itaque omnis, placeat minima doloribus quibusdam iusto maiores exercitationem sequi impedit sapiente!</p>
-					<button class="mt-4 p-2 bg-blue-900 text-white rounded-lg w-[50%] justify-self-center hover:bg-teal-500 hover:text-black">Start Learning</button>
-				</div>
-			</div>
+const lorem = "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Obcaecati odit minima earum atque. Deserunt maiores unde voluptatibus a quisquam id fugit facilis hic molestiae, cupiditate ipsa, odio quae tenetur enim."
+
+templ Courses() {
+	@templates.NoTerm("OpenWorkbook | Courses") {
+		<div class="flex items-center justify-center h-30 bg-gray-900">
+			<h1>Take a course!</h1>
+		</div>
+		<div class="grid grid-cols-3 py-4 bg-gray-900">
+			@optionCol("LÖVE", lorem, "Begin!", "/love", false)
+			@optionCol("course 2", lorem, "Begin!", "", true)
+			@optionCol("course 3", lorem, "Begin!", "", true)
 		</div>
 	}
+}
+
+templ optionCol(headerText string, bodyText string, buttonText string, buttonHref string, border bool) {
+	{{
+		var containerStyle string
+		if border == true {
+			containerStyle = "px-4 py-4 items-center text-center border-l-2 border-gray-500"
+		} else {
+			containerStyle = "px-4 py-4 items-center text-center"
+		}
+	}}
+	<div class={ containerStyle }>
+		<h2 class="mb-4">{ headerText }</h2>
+		<p class="mb-4">{ bodyText }</p>
+		@components.BasicButton(buttonText, buttonHref)
+	</div>
 }

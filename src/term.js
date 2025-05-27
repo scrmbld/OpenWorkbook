@@ -21,8 +21,9 @@ function splitByIndex(s) {
 
 // start the terminals and add button event listeners
 let terms = new Map();
-function load() {
-	let termElements = document.querySelectorAll('.terminal');
+function onload() {
+	// initialize all the terminals
+	let termElements = document.querySelectorAll(".terminal");
 	for (let t of termElements) {
 		let termId = t.id.replace("codeterminal", "");
 		let newTerm = new Terminal({
@@ -33,19 +34,23 @@ function load() {
 		terms.set(termId, newTerm);
 	}
 
-	let runButtons = document.querySelectorAll('button.run-code')
-	for (let b of runButtons) {
-		b.onclick = runCode;
+	// add oninput event listeners to code editing text areas
+	let codeEditors = document.querySelectorAll("problem-editing");
+	console.log(codeEditors);
+	console.log("e");
+	for (e of codeEditors) {
+		e.oninput = editorUpdateFunc(e)(e.value);
 	}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	load();
+	onload();
 });
 
 // sends our code to the server to run and connects to the instance that's created
 function runCode(e) {
-	const codeId = e.target.id.replace("coderun", "");
+	console.log(e)
+	const codeId = e.id.replace("coderun", "");
 	const codeText = document.getElementById("codearea" + codeId).value;
 	const term = terms.get(codeId);
 

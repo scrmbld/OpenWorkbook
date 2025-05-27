@@ -6,7 +6,6 @@ templ:
 
 frontend: $(wildcard ./src/*)
 	npx tailwindcss -i src/input.css -o src/output.css
-	ls src
 	rm -rf dist/*
 	cp -r src/* dist/.
 	cp ./node_modules/@xterm/xterm/css/xterm.css dist/xterm.css

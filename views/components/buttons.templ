@@ -1,0 +1,11 @@
+package components
+
+templ BasicButton(buttonText string, href string) {
+	if href == "" {
+		<button class="py-2 px-4 rounded-lg bg-teal-500 text-black hover:outline-2 hover:outline-white">{ buttonText }</button>
+	} else {
+		<a href={ templ.URL(href) }>
+			<button class="py-2 px-4 rounded-lg bg-teal-500 text-black hover:outline-2 hover:outline-white">{ buttonText }</button>
+		</a>
+	}
+}
