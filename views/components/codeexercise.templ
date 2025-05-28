@@ -3,7 +3,7 @@ package components
 import "math/rand"
 import "fmt"
 
-templ CodeProblem(starterCode string) {
+templ CodeExercise(starterCode string) {
 	// generate a random ID -- technically collisions are possible but extremely unlikely
 	{{ id := fmt.Sprintf("%d", rand.Int63()) }}
 	<div class="grid grid-cols-2 my-8">
@@ -15,7 +15,10 @@ templ CodeProblem(starterCode string) {
 		</div>
 		<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
 		<div class="flex justify-end col-start-2 mt-2">
-			<button id={ fmt.Sprintf("coderun%s", id) } onclick="runCode" class="run-code px-3 py-2 text-xl text-black bg-teal-500 hover:bg-teal-400 rounded-xl">Run</button>
+			<button id={ fmt.Sprintf("coderun%s", id) } onclick="runCode(this)" class="px-3 py-2 text-xl text-black bg-teal-500 hover:bg-teal-400 rounded-xl">Run</button>
 		</div>
+		<script>
+			startTerm({{ id }});
+		</script>
 	</div>
 }

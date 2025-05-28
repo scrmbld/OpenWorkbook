@@ -21,38 +21,26 @@ function splitByIndex(s) {
 
 // start the terminals and add button event listeners
 let terms = new Map();
-function onload() {
-	// initialize all the terminals
-	let termElements = document.querySelectorAll(".terminal");
-	for (let t of termElements) {
-		let termId = t.id.replace("codeterminal", "");
-		let newTerm = new Terminal({
-			cursorBlink: true
-		});
-		newTerm.open(t);
-		newTerm._initialized = true;
-		terms.set(termId, newTerm);
-	}
 
-	// add oninput event listeners to code editing text areas
-	let codeEditors = document.querySelectorAll("problem-editing");
-	console.log(codeEditors);
-	console.log("e");
-	for (e of codeEditors) {
-		e.oninput = editorUpdateFunc(e)(e.value);
-	}
+// callback function for the onload of terminal elements
+function startTerm(probId) {
+	const termId = `codeterminal${probId}`;
+	const termElement = document.getElementById(termId);
+	const newTerm = new Terminal({
+		cursorBlink: true
+	});
+	newTerm.open(termElement);
+	newTerm._initialized = true;
+	terms.set(probId, newTerm);
+
+	newTerm.write("Click 'Run' to run your code\r\n")
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-	onload();
-});
 
 // sends our code to the server to run and connects to the instance that's created
 function runCode(e) {
-	console.log(e)
-	const codeId = e.id.replace("coderun", "");
-	const codeText = document.getElementById("codearea" + codeId).value;
-	const term = terms.get(codeId);
+	const probId = e.id.replace("coderun", "");
+	const codeText = document.getElementById("codearea" + probId).value;
+	const term = terms.get(probId);
 
 	const socketProtocol = window.location.protocol === 'https' ? 'wss:' : 'ws:';
 	const socketUrl = `${socketProtocol}//${window.location.host}/echo`;
@@ -134,7 +122,7 @@ function runCode(e) {
 	}
 
 	function deactivateTerm() {
-		term.write("Done!\n\r");
+		term.write("Done!\r\n");
 		term.blur();
 	}
 }

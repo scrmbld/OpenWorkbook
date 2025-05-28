@@ -21,7 +21,7 @@ templ base(title string, imports []linkImport) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
-			<link rel="stylesheet" href="/output.css"/>
+			<link rel="stylesheet" href="/css/output.css"/>
 			for _,v := range(imports) {
 				if v.Type == "text/css" {
 					<link rel="stylesheet" href={ string(v.URL) }/>
@@ -29,8 +29,8 @@ templ base(title string, imports []linkImport) {
 					<script src={ string(v.URL) }></script>
 				}
 			}
-			<link rel="stylesheet" href="/prism.css"/>
-			<script src="/prism.js"></script>
+			<link rel="stylesheet" href="/css/include/prism.css"/>
+			<script src="/js/include/prism.js"></script>
 		</head>
 		<body>
 			@components.NavBar()
@@ -47,9 +47,9 @@ templ NoTerm(title string) {
 
 templ WithTerm(title string) {
 	@base(title, []linkImport{
-		newLinkImport("/xterm.js", "text/javascript"),
-		newLinkImport("/xterm.css", "text/css"),
-		newLinkImport("/term.js", "text/javascript"),
+		newLinkImport("/js/include/xterm.js", "text/javascript"),
+		newLinkImport("/css/include/xterm.css", "text/css"),
+		newLinkImport("/js/exercise.js", "text/javascript"),
 	}) {
 		{ children... }
 	}

@@ -5,11 +5,11 @@ templ:
 	templ generate -path ./views
 
 frontend: $(wildcard ./src/*)
-	npx tailwindcss -i src/input.css -o src/output.css
+	npx tailwindcss -i src/css/input.css -o src/css/output.css
 	rm -rf dist/*
 	cp -r src/* dist/.
-	cp ./node_modules/@xterm/xterm/css/xterm.css dist/xterm.css
-	cp ./node_modules/@xterm/xterm/lib/xterm.js dist/xterm.js
+	cp ./node_modules/@xterm/xterm/css/xterm.css dist/css/include/xterm.css
+	cp ./node_modules/@xterm/xterm/lib/xterm.js dist/js/include/xterm.js
 
 luadocker: docker/lua/Dockerfile
 	docker build -t runlua:latest ./docker/lua/
