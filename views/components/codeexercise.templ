@@ -8,17 +8,22 @@ templ CodeExercise(starterCode string) {
 	{{ id := fmt.Sprintf("%d", rand.Int63()) }}
 	<div class="grid grid-cols-2 my-8">
 		<div class="relative pr-4">
-			<textarea
-				id={ fmt.Sprintf("codearea%s", id) }
-				class="w-full h-full text-lg text-white border-3 border-teal-500 rounded-lg"
-			>{ starterCode }</textarea>
+			<div id={ fmt.Sprintf("codearea%s", id) } class="codearea language-lua h-full p-2 rounded-md border-2 border-teal-500"></div>
 		</div>
 		<div class="terminal" id={ fmt.Sprintf("codeterminal%s", id) }></div>
 		<div class="flex justify-end col-start-2 mt-2">
-			<button id={ fmt.Sprintf("coderun%s", id) } onclick="runCode(this)" class="px-3 py-2 text-xl text-black bg-teal-500 hover:bg-teal-400 rounded-xl">Run</button>
+			<button id={ fmt.Sprintf("coderun%s", id) } class="px-3 py-2 text-xl text-black bg-teal-500 hover:bg-teal-400 rounded-xl">Run</button>
 		</div>
 		<script>
-			startTerm({{ id }});
+			const tryExercise = import("/js/exercise.js");
+			tryExercise.then((exercise) => {
+					exercise.startTerm({{ id }});
+					exercise.startCodeJar({{ id }});
+					const runButton = document.getElementById({{ fmt.Sprintf("coderun%s", id) }});
+					runButton.addEventListener("click", exercise.runCode);
+			}, () => {
+				console.error("failed to import /js/exercise.js", exercise);
+			});
 		</script>
 	</div>
 }

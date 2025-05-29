@@ -10,6 +10,7 @@ frontend: $(wildcard ./src/*)
 	cp -r src/* dist/.
 	cp ./node_modules/@xterm/xterm/css/xterm.css dist/css/include/xterm.css
 	cp ./node_modules/@xterm/xterm/lib/xterm.js dist/js/include/xterm.js
+	cp ./node_modules/codejar/dist/codejar.js dist/js/include/codejar.js
 
 luadocker: docker/lua/Dockerfile
 	docker build -t runlua:latest ./docker/lua/

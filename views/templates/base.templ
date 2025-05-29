@@ -22,14 +22,16 @@ templ base(title string, imports []linkImport) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/css/output.css"/>
+			<link rel="stylesheet" href="/css/include/prism.css"/>
 			for _,v := range(imports) {
 				if v.Type == "text/css" {
 					<link rel="stylesheet" href={ string(v.URL) }/>
-				} else {
+				} else if v.Type == "text/javascript" {
 					<script src={ string(v.URL) }></script>
+				} else if v.Type == "module" {
+					<script src={ string(v.URL) } type="module"></script>
 				}
 			}
-			<link rel="stylesheet" href="/css/include/prism.css"/>
 			<script src="/js/include/prism.js"></script>
 		</head>
 		<body>
@@ -47,9 +49,10 @@ templ NoTerm(title string) {
 
 templ WithTerm(title string) {
 	@base(title, []linkImport{
-		newLinkImport("/js/include/xterm.js", "text/javascript"),
 		newLinkImport("/css/include/xterm.css", "text/css"),
-		newLinkImport("/js/exercise.js", "text/javascript"),
+		newLinkImport("/js/include/xterm.js", "text/javascript"),
+		newLinkImport("/js/include/codejar.js", "module"),
+		newLinkImport("/js/exercise.js", "module"),
 	}) {
 		{ children... }
 	}

@@ -44,7 +44,7 @@ func ch0() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col justify-center px-4 md:px-8 py-6 bg-gray-900\"><h1 class=\"mb-4 text-center\">Chapter 0: Hello World</h1><p class=\"mb-4 indent-8\">Let's get started with an ancient programming tradition: Hello Word! We're going to get the computer to say 'hello'. This also lets us know if we've set everything up correctly.</p><p class=\"mb-4 indent-8\">Nearly all programming languages have some way to print text to the screen. In lua, we do this using the `print` function. We'll learn more about what functions are and how they work later, but for now, all you need to know is that if you write `print()`, and put a message in quotation marks between the parenthesis, it will print that message (without the quotes) to the output.</p><h3 class=\"mb-4\">Example: This code will print \"Hello World\" (without quotation marks) to the output</h3>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col justify-center px-4 md:px-8 py-6 bg-gray-900\"><h1 class=\"mb-4 text-center\">Chapter 0: Hello World</h1><p class=\"mb-4 indent-8\">Let's get started with an ancient programming tradition: Hello Word! We're going to get the computer to say 'hello'. This also lets us know if we've set everything up correctly.</p><p class=\"mb-4 indent-8\">Nearly all programming languages have some way to print text to the screen. In lua, we do this using the `print` function. We'll learn more about what functions are and how they work later, but for now, all you need to know is that if you write `print()`, and put a message in quotation marks between the parenthesis, it will print that message (without the quotes) to the output.</p><h2 class=\"mb-4\">Example: This code will print \"Hello World\" (without quotation marks) to the output</h2>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -52,7 +52,7 @@ func ch0() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h3 class=\"text-xl mb-4\">Exercise 0.1: Say Hello!</h3><p class=\"mb-4\">Write code that prints out a message of your choice based on the example above. Try doing this with a few different messages.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h2 class=\"mb-4\">Exercise 0.1: Say Hello!</h2><p class=\"mb-4\">Write code that prints out a message of your choice based on the example above. Try doing this with a few different messages.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

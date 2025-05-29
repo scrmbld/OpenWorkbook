@@ -1,3 +1,5 @@
+import { CodeJar } from "/js/include/codejar.js";
+
 class ProcMessage {
 	constructor(category, body) {
 		this.category = category;
@@ -19,11 +21,15 @@ function splitByIndex(s) {
 	return result;
 }
 
+async function highlightAsync(element) {
+	Prism.highlightElement(element);
+}
+
 // start the terminals and add button event listeners
 let terms = new Map();
 
-// callback function for the onload of terminal elements
-function startTerm(probId) {
+// function to initialize terminal elements, used in the script tag in the CodeExercise templ
+export function startTerm(probId) {
 	const termId = `codeterminal${probId}`;
 	const termElement = document.getElementById(termId);
 	const newTerm = new Terminal({
@@ -36,10 +42,16 @@ function startTerm(probId) {
 	newTerm.write("Click 'Run' to run your code\r\n")
 }
 
+export function startCodeJar(probId) {
+	const jarElement = document.getElementById(`codearea${probId}`);
+	CodeJar(jarElement, highlightAsync);
+}
+
 // sends our code to the server to run and connects to the instance that's created
-function runCode(e) {
-	const probId = e.id.replace("coderun", "");
-	const codeText = document.getElementById("codearea" + probId).value;
+export function runCode(e) {
+	const probId = e.target.id.replace("coderun", "");
+	const codeText = document.getElementById("codearea" + probId).textContent;
+	console.log(codeText);
 	const term = terms.get(probId);
 
 	const socketProtocol = window.location.protocol === 'https' ? 'wss:' : 'ws:';
